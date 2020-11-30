@@ -38,7 +38,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							<div class="card card-primary card-outline">
 								<div class="card-header">
 									<a href="<?= site_url('sales/koperasi/channeling/temp_rekonsel') ?>" class="btn btn-sm btn-link float-right"> Template Rekonsialisasi</a>
-									<a href="#" class="btn btn-sm btn-link float-right"> Rekonsialisasi (<?= $list_rekon['rekon'] < 0 ? 0 : $list_rekon['rekon']; ?>)</a>
+									<!-- <a href="#" class="btn btn-sm btn-link float-right"> Rekonsialisasi (<?= $list_rekon['rekon'] < 0 ? 0 : $list_rekon['rekon']; ?>)</a> -->
 								</div>
 								<div class="card-body">
 									<table class="table table-bordered table-hover display nowrap" id="tbl_example">
@@ -89,7 +89,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 															<small class="text-success">
 																<i class="fa fa-fw fa-check"></i> <?= $val['status']; ?>
 															</small><br>
-															<!-- <small><?= tgl_indo($val['tgl_rekon']); ?></small> -->
+															<small><?= tgl_indo($val['tgl_rekon']); ?></small>
 														<?php endif; ?>
 														<!-- <span class="badge <?= $val['anggota'] > 0 ? 'badge-info' : 'badge-danger' ?>"><?= $val['anggota'], ' anggota'; ?></span> -->
 													</td>
@@ -615,21 +615,25 @@ scratch. This page gets rid of all links and provides the needed markup only.
 									</div>
 								</div>`;
 
-					html += `<div class="row">
-									<label class="col-md-2">Tunggakan</label>
-									<div class="col-md-3">
-										Rp ` + number_format(res.koperasi.tunggakan, 2, '.', ',') + `
-									</div>
-									<label class="col-md-2">Outstanding Pokok</label>
-									<div class="col-md-3">
-										Rp ` + number_format(res.koperasi.os_pokok, 2, '.', ',') + `
-									</div>
-								</div>`;
+					// html += `<div class="row">
+					// 				<label class="col-md-2">Tunggakan</label>
+					// 				<div class="col-md-3">
+					// 					Rp ` + number_format(res.koperasi.tunggakan, 2, '.', ',') + `
+					// 				</div>
+					// 				<label class="col-md-2">Outstanding Pokok</label>
+					// 				<div class="col-md-3">
+					// 					Rp ` + number_format(res.koperasi.os_pokok, 2, '.', ',') + `
+					// 				</div>
+					// 			</div>`;
 
 					html += `<div class="row">
 									<label class="col-md-2">Jumlah Anggota</label>
 									<div class="col-md-3">
 										` + res.anggota.length + ` Anggota</span>
+									</div>
+									<label class="col-md-2">Outstanding Pokok</label>
+									<div class="col-md-3">
+										Rp ` + number_format(res.koperasi.os_pokok, 2, '.', ',') + `
 									</div>
 								</div>`;
 

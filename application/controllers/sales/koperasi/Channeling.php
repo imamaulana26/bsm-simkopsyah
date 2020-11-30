@@ -23,7 +23,8 @@ class Channeling extends CI_Controller
 		$data['breadcrumb'] = '<li class="breadcrumb-item"><a href="' . site_url('sales/home') . '">Home</a></li>';
 		$data['breadcrumb'] .= '<li class="breadcrumb-item active">Koperasi</li>';
 
-		$data['list_koperasi'] = $this->db->select('a.*, c.nm_area, count(b.nocif_anggota) as anggota, sum(b.nom_pencairan) as plafond, sum(b.os_pokok) as ospokok, sum(b.tunggakan) as tunggakan')->from('tbl_koperasi a')
+		// $data['list_koperasi'] = $this->db->select('a.*, c.nm_area, count(b.nocif_anggota) as anggota, sum(b.nom_pencairan) as plafond, sum(b.os_pokok) as ospokok, sum(b.tunggakan) as tunggakan')->from('tbl_koperasi a')
+		$data['list_koperasi'] = $this->db->select('a.*, c.nm_area, count(b.nocif_anggota) as anggota, sum(b.nom_pencairan) as plafond, sum(b.os_pokok) as ospokok')->from('tbl_koperasi a')
 			->join('tbl_anggota_channeling b', 'a.id = b.id_koperasi', 'left')
 			->join('tbl_area c', 'a.kd_area = c.kd_area', 'left')
 			->where(['a.fk_kode_ao' => $this->session->userdata('kd_ao'), 'a.jns_pembiayaan' => 'Channeling'])
@@ -40,7 +41,7 @@ class Channeling extends CI_Controller
 				[
 					'nom_pencairan' => $val['plafond'],
 					'os_pokok' => $val['ospokok'],
-					'tunggakan' => $val['tunggakan']
+					// 'tunggakan' => $val['tunggakan']
 				],
 				['id' => $val['id']]
 			);
@@ -329,7 +330,8 @@ class Channeling extends CI_Controller
 
 	public function upd_nominal($id)
 	{
-		$cek_sum = $this->db->select('sum(nom_pencairan) as plafond, sum(os_pokok) as ospokok, sum(tunggakan) as tunggakan')
+		// $cek_sum = $this->db->select('sum(nom_pencairan) as plafond, sum(os_pokok) as ospokok, sum(tunggakan) as tunggakan')
+		$cek_sum = $this->db->select('sum(nom_pencairan) as plafond, sum(os_pokok) as ospokok')
 			->from('tbl_anggota_channeling')
 			->where(['id_koperasi' => $id])
 			->get()->row_array();
@@ -338,7 +340,7 @@ class Channeling extends CI_Controller
 			[
 				'nom_pencairan' => $cek_sum['plafond'],
 				'os_pokok' => $cek_sum['ospokok'],
-				'tunggakan' => $cek_sum['tunggakan']
+				// 'tunggakan' => $cek_sum['tunggakan']
 			],
 			['id' => $id]
 		);
@@ -362,10 +364,11 @@ class Channeling extends CI_Controller
 		$data['koperasi'] = $this->db->get()->row_array();
 		$data['anggota'] = $this->db->get_where('tbl_anggota_channeling', ['id_koperasi' => $id])->result_array();
 
-		$qry = $this->db->select('sum(nom_pencairan) as plafond, sum(os_pokok) as ospokok, sum(tunggakan) as tunggakan')->from('tbl_anggota_channeling')->where(['id_koperasi' => $id])->get()->row_array();
+		// $qry = $this->db->select('sum(nom_pencairan) as plafond, sum(os_pokok) as ospokok, sum(tunggakan) as tunggakan')->from('tbl_anggota_channeling')->where(['id_koperasi' => $id])->get()->row_array();
+		$qry = $this->db->select('sum(nom_pencairan) as plafond, sum(os_pokok) as ospokok')->from('tbl_anggota_channeling')->where(['id_koperasi' => $id])->get()->row_array();
 		$data['plafond'] = $qry['plafond'];
 		$data['ospokok'] = $qry['ospokok'];
-		$data['tunggakan'] = $qry['tunggakan'];
+		// $data['tunggakan'] = $qry['tunggakan'];
 
 		// var_dump($data); die;
 
@@ -393,7 +396,7 @@ class Channeling extends CI_Controller
 			'tgl_pencairan' => tgl_db(input('tgl_cair')),
 			'nom_pencairan' => str_replace(',', '', input('nom_plafond')),
 			'os_pokok' => str_replace(',', '', input('os_pokok')),
-			'tunggakan' => str_replace(',', '', input('tunggakan')),
+			// 'tunggakan' => str_replace(',', '', input('tunggakan')),
 			'createDate' => date('Y-m-d H:i:s')
 		);
 
@@ -432,7 +435,7 @@ class Channeling extends CI_Controller
 			'tgl_pencairan' => tgl_db(input('tgl_cair')),
 			'nom_pencairan' => str_replace(',', '', input('nom_plafond')),
 			'os_pokok' => str_replace(',', '', input('os_pokok')),
-			'tunggakan' => str_replace(',', '', input('tunggakan')),
+			// 'tunggakan' => str_replace(',', '', input('tunggakan')),
 			'updateDate' => date('Y-m-d H:i:s')
 		);
 
@@ -648,7 +651,7 @@ class Channeling extends CI_Controller
 			'TENOR',
 			'NOM_PENCAIRAN',
 			'OSPOKOK',
-			'TUNGGAKAN'
+			// 'TUNGGAKAN'
 		);
 
 		$csv_header = '';
@@ -657,7 +660,8 @@ class Channeling extends CI_Controller
 		}
 		$csv_header .= "\n";
 
-		$csv_row = '2020-10-31|LD1635789799|79207999|KOPEDANA|2020-08-12|2020-10-31|35|30000000|1570222.83|0|';
+		// $csv_row = '2020-10-31|LD1635789799|79207999|KOPEDANA|2020-08-12|2020-10-31|35|30000000|1570222.83|0|';
+		$csv_row = '2020-10-31|LD1635789799|79207999|KOPEDANA|2020-08-12|2020-10-31|35|30000000|1570222.83|';
 		$csv_row .= "\n";
 
 		/* Download as CSV File */
@@ -827,11 +831,11 @@ class Channeling extends CI_Controller
 					$data['os_pokok'] = $sheetData[$i][8];
 				}
 
-				if (!is_float($sheetData[$i][9])) {
-					$status = false;
-				} else {
-					$data['tunggakan'] = $sheetData[$i][9];
-				}
+				// if (!is_float($sheetData[$i][9])) {
+				// 	$status = false;
+				// } else {
+				// 	$data['tunggakan'] = $sheetData[$i][9];
+				// }
 
 				if ($status === false) {
 					$msg = 'Terjadi kesalahan saat proses upload, periksa kembali data file upload Anda!';
@@ -890,7 +894,7 @@ class Channeling extends CI_Controller
 				'TENOR',
 				'NOM_PENCAIRAN',
 				'OSPOKOK',
-				'TUNGGAKAN'
+				// 'TUNGGAKAN'
 			);
 
 			$csv_header = '';
@@ -910,7 +914,7 @@ class Channeling extends CI_Controller
 				$csv_row .= $val['tenor'] . '|';
 				$csv_row .= $val['nom_pencairan'] . '|';
 				$csv_row .= $val['os_pokok'] . '|';
-				$csv_row .= $val['tunggakan'] . '|';
+				// $csv_row .= $val['tunggakan'] . '|';
 				$csv_row .= "\n";
 			}
 			$csv_row .= "\n";
@@ -939,6 +943,7 @@ class Channeling extends CI_Controller
 			'NAMA_ANGGOTA',
 			'BATCH',
 			'TENOR',
+			'TGL_PENCAIRAN',
 			'PLAFOND',
 			'TGL_OSPOKOK',
 			'OSPOKOK'
@@ -950,7 +955,7 @@ class Channeling extends CI_Controller
 		}
 		$csv_header .= "\n";
 
-		$csv_row = '7081935337|LD1826138904|Hary Sudaryanto|1|12|50000000.00|2019-12-12|99037645.71|';
+		$csv_row = '7081935337|LD1826138904|Hary Sudaryanto|1|12|2019-10-12|50000000.00|2019-12-12|99037645.71|';
 		$csv_row .= "\n";
 
 		/* Download as CSV File */
@@ -1000,7 +1005,7 @@ class Channeling extends CI_Controller
 
 					if (strlen($sheetData[$i][1]) != 12 || substr(strtoupper($sheetData[$i][1]), 0, 2) != 'LD') {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][1] . ' baris' . $i;
+						$msg .= 'kolom ' . $sheetData[0][1] . ' baris ' . $i;
 						break;
 					} else {
 						$data['noloan'] = $sheetData[$i][1];
@@ -1008,7 +1013,7 @@ class Channeling extends CI_Controller
 
 					if (!preg_match('/^[a-zA-Z ]+$/', $sheetData[$i][2])) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][2] . ' baris' . $i;
+						$msg .= 'kolom ' . $sheetData[0][2] . ' baris ' . $i;
 						break;
 					} else {
 						$data['nm_anggota'] = $sheetData[$i][2];
@@ -1016,7 +1021,7 @@ class Channeling extends CI_Controller
 
 					if (!is_numeric($sheetData[$i][3])) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][3] . ' baris' . $i;
+						$msg .= 'kolom ' . $sheetData[0][3] . ' baris ' . $i;
 						break;
 					} else {
 						$data['batch'] = $sheetData[$i][3];
@@ -1024,39 +1029,46 @@ class Channeling extends CI_Controller
 
 					if (!is_numeric($sheetData[$i][4])) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][4] . ' baris' . $i;
+						$msg .= 'kolom ' . $sheetData[0][4] . ' baris ' . $i;
 						break;
 					} else {
 						$data['tenor'] = $sheetData[$i][4];
 					}
 
-					if (!is_float($sheetData[$i][5])) {
+					if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $sheetData[$i][5])) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][5] . ' baris' . $i;
+						$msg .= 'kolom ' . $sheetData[0][5] . ' baris ' . $i;
 						break;
 					} else {
-						$data['plafond'] = $sheetData[$i][5];
+						$data['tgl_pencairan'] = $sheetData[$i][5];
 					}
 
-					if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $sheetData[$i][6])) {
+					if (!is_double($sheetData[$i][6])) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][6] . ' baris' . $i;
+						$msg .= 'kolom ' . $sheetData[0][6] . ' baris ' . $i;
 						break;
 					} else {
-						$data['tgl_ospokok'] = $sheetData[$i][6];
+						$data['plafond'] = $sheetData[$i][6];
 					}
 
-					if (!is_float($sheetData[$i][7])) {
+					if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $sheetData[$i][7])) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][7] . ' baris' . $i;
+						$msg .= 'kolom ' . $sheetData[0][7] . ' baris ' . $i;
 						break;
 					} else {
-						$data['ospokok'] = $sheetData[$i][7];
+						$data['tgl_ospokok'] = $sheetData[$i][7];
+					}
+
+					if (!is_double($sheetData[$i][8])) {
+						$status = false;
+						$msg .= 'kolom ' . $sheetData[0][8] . ' baris ' . $i;
+						break;
+					} else {
+						$data['ospokok'] = $sheetData[$i][8];
 					}
 
 					if ($status === false) {
 						// $msg = 'Terjadi kesalahan saat proses upload, periksa kembali data file upload Anda!';
-
 						$this->db->delete('tbl_rekon_channeling', ['id_koperasi' => input('id_koperasi')]);
 					} else {
 						$this->db->insert('tbl_rekon_channeling', $data);

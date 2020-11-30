@@ -63,12 +63,28 @@ scratch. This page gets rid of all links and provides the needed markup only.
 										<label class="col-md-4">Plafond</label>
 										<div class="col-md">
 											<?= 'Rp. ' . number_format($koperasi['plafond'], 2, '.', ','); ?>
+											<?php if ($koperasi['plafond'] < $bank['plafond']) : ?>
+												<i class="fa fa-fw fa-caret-down text-red"></i>
+												<small class="text-red">(<?= number_format($koperasi['plafond'] - $bank['plafond'], 2, '.', ','); ?>)</small>
+											<?php endif; ?>
+											<?php if ($koperasi['plafond'] > $bank['plafond']) : ?>
+												<i class="fa fa-fw fa-caret-up text-success"></i>
+												<small class="text-success">(<?= number_format($koperasi['plafond'] - $bank['plafond'], 2, '.', ','); ?>)</small>
+											<?php endif; ?>
 										</div>
 									</div>
 									<div class="row">
 										<label class="col-md-4">O/S <?= substr(tgl_indo($koperasi['tgl_ospokok']), -8) ?></label>
 										<div class="col-md">
 											<?= 'Rp. ' . number_format($koperasi['ospokok'], 2, '.', ',') ?>
+											<?php if ($koperasi['ospokok'] < $bank['ospokok']) : ?>
+												<i class="fa fa-fw fa-caret-down text-red"></i>
+												<small class="text-red">(<?= number_format($koperasi['ospokok'] - $bank['ospokok'], 2, '.', ','); ?>)</small>
+											<?php endif; ?>
+											<?php if ($koperasi['ospokok'] > $bank['ospokok']) : ?>
+												<i class="fa fa-fw fa-caret-up text-success"></i>
+												<small class="text-success">(<?= number_format($koperasi['ospokok'] - $bank['ospokok'], 2, '.', ','); ?>)</small>
+											<?php endif; ?>
 										</div>
 									</div>
 									<div class="row">
@@ -91,26 +107,28 @@ scratch. This page gets rid of all links and provides the needed markup only.
 											Action
 										</button>
 										<div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-											<a class="dropdown-item" href="#">Export CSV</a>
-											<a class="dropdown-item" href="#">Update Outstanding</a>
-											<a class="dropdown-item" href="#">Reject Rekonsialisasi</a>
+											<a class="dropdown-item" href="<?= site_url('sales/koperasi/rekonsel/export/' . base64_encode($bank['id'])) ?>">Export CSV</a>
+											<a class="dropdown-item" href="<?= site_url('sales/koperasi/rekonsel/update/' . base64_encode($bank['id'])) ?>">Update Outstanding</a>
+											<a class="dropdown-item" href="<?= site_url('sales/koperasi/rekonsel/reject/' . base64_encode($bank['id'])) ?>">Reject Rekonsialisasi</a>
 										</div>
 									</div>
 								</div>
 								<div class="card-body">
-									<table class="table table-hover display" style="width:100%">
+									<table class="table table-hover display">
 										<thead>
 											<tr>
 												<th rowspan="2" style="width: 10px;">#</th>
 												<th colspan="2" style="border-right: 2px solid #dee2e6;"></th>
-												<th colspan="2" class="text-center" style="border-right: 2px solid #dee2e6;">Pihak Bank</th>
-												<th colspan="2" class="text-center">Pihak Koperasi</th>
+												<th colspan="3" class="text-center" style="border-right: 2px solid #dee2e6;">Pihak Bank</th>
+												<th colspan="3" class="text-center">Pihak Koperasi</th>
 											</tr>
 											<tr>
 												<th>Nomor Loan</th>
 												<th style="border-right: 2px solid #dee2e6;">Nama Anggota</th>
+												<th class="text-center">Sisa Tenor</th>
 												<th class="text-center">Plafond</th>
 												<th class="text-center" style="border-right: 2px solid #dee2e6;">Outstanding</th>
+												<th class="text-center">Sisa Tenor</th>
 												<th class="text-center">Plafond</th>
 												<th class="text-center">Outstanding</th>
 											</tr>
@@ -123,6 +141,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 											$os_kop = array_sum(array_column($li_koperasi, 'ospokok'));
 											foreach ($li_bank as $key => $val) {
 												$cari = array_search($val['noloan_anggota'], $kolom);
+												$sisa_tenor = (date('Y', strtotime($val['tgl_ospokok'])) - date('Y', strtotime($val['tgl_pencairan']))) * 12 + (date('m', strtotime($val['tgl_ospokok'])) - date('m', strtotime($val['tgl_pencairan'])));
 
 												$plafond_bank += $val['plafond'];
 												$os_bank += $val['ospokok'];
@@ -131,10 +150,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
 												echo '<td>' . ($key + 1) . '</td>';
 												echo '<td>' . $val['noloan_anggota'] . '</td>';
 												echo '<td style="border-right: 2px solid #dee2e6;">' . $val['nm_anggota'] . '</td>';
+												echo '<td class="text-center">' . ($val['tenor'] - $sisa_tenor) . ' bulan</td>';
 												echo '<td class="text-center">' . number_format($val['plafond'], 2, '.', ',') . '</td>';
 												echo '<td class="text-center" style="border-right: 2px solid #dee2e6;">' . number_format($val['ospokok'], 2, '.', ',') . '</td>';
 
 												if ($cari !== false) {
+													$sisa_tenor = (date('Y', strtotime($li_koperasi[$cari]['tgl_ospokok'])) - date('Y', strtotime($li_koperasi[$cari]['tgl_pencairan']))) * 12 + (date('m', strtotime($li_koperasi[$cari]['tgl_ospokok'])) - date('m', strtotime($li_koperasi[$cari]['tgl_pencairan'])));
+
+													echo '<td class="text-center">' . ($li_koperasi[$cari]['tenor'] - $sisa_tenor) . ' bulan</td>';
 													echo '<td class="text-center">';
 													echo number_format($li_koperasi[$cari]['plafond'], 2, '.', ',');
 													if ($li_koperasi[$cari]['plafond'] < $val['plafond']) {
@@ -161,40 +184,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
 												} else {
 													echo '<td class="text-center">#N/A</td>';
 													echo '<td class="text-center">#N/A</td>';
+													echo '<td class="text-center">#N/A</td>';
 												}
 												echo '</tr>';
 											} ?>
 										</tbody>
-										<tfoot style="background-color: #dee2e6;">
-											<tr>
-												<th>&nbsp;</th>
-												<th colspan="2">Subtotal</th>
-												<th class="text-center"><?= number_format($plafond_bank, 2, '.', ','); ?></th>
-												<th class="text-center"><?= number_format($os_bank, 2, '.', ','); ?></th>
-												<th class="text-center">
-													<?= number_format($plafond_kop, 2, '.', ','); ?>
-													<?php if ($plafond_kop < $plafond_bank) {
-														echo '<i class="fa fa-fw fa-caret-down" style="color: red"></i><br>';
-														echo '<small class="text-red">(' . number_format($plafond_kop - $plafond_bank, 2, '.', ',') . ')</small>';
-													}
-													if ($plafond_kop > $plafond_bank) {
-														echo '<i class="fa fa-fw fa-caret-up" style="color: green"></i><br>';
-														echo '<small class="text-success">' . number_format($plafond_kop - $plafond_bank, 2, '.', ',') . '</small>';
-													} ?>
-												</th>
-												<th class="text-center">
-													<?= number_format($os_kop, 2, '.', ','); ?>
-													<?php if ($os_kop < $os_bank) {
-														echo '<i class="fa fa-fw fa-caret-down" style="color: red"></i><br>';
-														echo '<small class="text-red">(' . number_format($os_kop - $os_bank, 2, '.', ',') . ')</small>';
-													}
-													if ($os_kop > $os_bank) {
-														echo '<i class="fa fa-fw fa-caret-up" style="color: green"></i><br>';
-														echo '<small class="text-success">' . number_format($os_kop - $os_bank, 2, '.', ',') . '</small>';
-													} ?>
-												</th>
-											</tr>
-										</tfoot>
 									</table>
 								</div>
 							</div>

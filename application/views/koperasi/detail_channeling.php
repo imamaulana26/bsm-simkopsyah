@@ -72,19 +72,23 @@ scratch. This page gets rid of all links and provides the needed markup only.
 										</div>
 									</div>
 									<div class="row">
-										<label class="col-md-2">Tunggakan</label>
+										<!-- <label class="col-md-2">Tunggakan</label>
 										<div class="col-md-3">
 											Rp <?= number_format($tunggakan, 2, '.', ',') ?>
-										</div>
-										<label class="col-md-2">Outstanding Pokok</label>
+										</div> -->
+										<!-- <label class="col-md-2">Outstanding Pokok</label>
 										<div class="col-md-3">
 											Rp <?= number_format($ospokok, 2, '.', ',') ?>
-										</div>
+										</div> -->
 									</div>
 									<div class="row">
 										<label class="col-md-2">Jumlah Anggota</label>
 										<div class="col-md-3">
 											<?= count($anggota) . ' Anggota'; ?> <span id="btn_collapse" data-toggle="collapse" data-target="#li_anggota" style="cursor: pointer; color: #007BFF;"><i class="fa fa-fw fa-binoculars"></i></span>
+										</div>
+										<label class="col-md-2">Outstanding Pokok</label>
+										<div class="col-md-3">
+											Rp <?= number_format($ospokok, 2, '.', ',') ?>
 										</div>
 									</div>
 								</div>
@@ -117,7 +121,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 													<th>Jangka Waktu</th>
 													<th>Plafond Cair (Rp)</th>
 													<th>Outstanding (Rp)</th>
-													<th>Tunggakan (Rp)</th>
+													<!-- <th>Tunggakan (Rp)</th> -->
 													<th class="text-center" style="width: 100px;">Opsi</th>
 												</tr>
 											</thead>
@@ -140,9 +144,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
 															<br>
 															<small class="text-muted"><?= tgl_indo($val['tgl_ospokok']); ?></small>
 														</td>
-														<td class="text-right">
+														<!-- <td class="text-right">
 															<?= number_format($val['tunggakan'], 2, '.', ',') ?>
-														</td>
+														</td> -->
 														<td class="text-center">
 															<span class="btn btn-xs btn-outline-success" title="Sunting" onclick="sunting('<?= base64_encode($val['id']) ?>')"><i class="fas fa-fw fa-edit"></i></span>
 															<span class="btn btn-xs btn-outline-danger" title="Hapus" onclick="hapus('<?= base64_encode($val['id']) ?>')"><i class="fas fa-fw fa-trash"></i></span>
@@ -332,13 +336,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
 								<div class="invalid-feedback" id="os_pokok-feedback"></div>
 							</div>
 						</div>
-						<div class="form-group row">
-							<label for="tunggakan" class="col-sm-3 col-form-label">OS Pokok</label>
+						<!-- <div class="form-group row">
+							<label for="tunggakan" class="col-sm-3 col-form-label">OS Tunggakan</label>
 							<div class="col-sm-3">
 								<input type="text" class="form-control" id="tunggakan" name="tunggakan" onkeypress="return CheckNumeric()" onkeyup="return FormatCurrency(this)">
 								<div class="invalid-feedback" id="tunggakan-feedback"></div>
 							</div>
-						</div>
+						</div> -->
 					</form>
 				</div>
 				<div class="modal-footer">
