@@ -16,6 +16,12 @@ function is_login()
 	}
 }
 
+function validateDate($date, $format = 'Y-m-d')
+{
+	$d = DateTime::createFromFormat($format, $date);
+	return $d && $d->format($format) == $date;
+}
+
 function input($var)
 {
 	$ci = get_instance();
@@ -45,7 +51,7 @@ function tgl_indo($tgl)
 function tgl_db($tgl)
 {
 	$exp = explode(' ', $tgl);
-	$arr_bln = array(1 => 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec');
+	$arr_bln = array(1 => 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec');
 
 	$d = $exp[0];
 	$m = array_search($exp[1], $arr_bln) > 9 ? array_search($exp[1], $arr_bln) : '0' . array_search($exp[1], $arr_bln);
