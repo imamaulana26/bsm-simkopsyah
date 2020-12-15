@@ -101,21 +101,42 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					<div class="row">
 						<div class="col-md">
 							<div class="card">
-								<div class="card-header">
-									<div class="dropdown float-right">
-										<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-											Action
-										</button>
-										<div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-											<a class="dropdown-item" href="<?= site_url('sales/koperasi/rekonsel/export/' . base64_encode($bank['id'])) ?>">Export CSV</a>
-											<a class="dropdown-item" href="<?= site_url('sales/koperasi/rekonsel/update/' . base64_encode($bank['id'])) ?>">Update Outstanding</a>
-											<a class="dropdown-item" href="<?= site_url('sales/koperasi/rekonsel/reject/' . base64_encode($bank['id'])) ?>">Reject Rekonsialisasi</a>
-										</div>
-									</div>
-								</div>
 								<div class="card-body">
-									<table class="table table-hover display">
-										<thead>
+									<h5 class="card-title text-bold">Resume</h5><br>
+									<ul class="list-unstyled mt-2">
+										<?php $msg = 'Data bank dengan data nasabah koperasi ';
+										if (($bank['anggota'] != $koperasi['anggota']) || ($bank['ospokok'] != $koperasi['ospokok'])) {
+											$msg .= '<b>tidak sesuai</b> sebagai berikut :';
+										} else {
+											$msg .= '<b>telah sesuai</b>.';
+										} ?>
+										<li><?= $msg; ?></li>
+										<li>
+											<ul>
+												<span id="display"></span>
+											</ul>
+										</li>
+									</ul>
+									<?php if (($bank['anggota'] != $koperasi['anggota']) || ($bank['ospokok'] != $koperasi['ospokok'])) { ?>
+										<h5 class="card-title text-bold">Rekomendasi</h5><br>
+										<p>Apabila ditemukan selisih pada data koperasi dengan data bank maka harap segera dilakukan <b>Pelunasan</b>.</p>
+									<?php } ?>
+									<form action="<?= site_url('sales/koperasi/rekonsel/update') ?>" method="POST">
+										<input type="hidden" name="id" value="<?= $bank['id'] ?>">
+										<input type="hidden" name="tgl_os" value="<?= $bank['tgl_ospokok'] ?>">
+										<button class="btn btn-primary" type="submit">Oke</button>
+									</form>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md">
+							<div class="card">
+								<div class="card-body">
+									<table class="table table-hover">
+										<thead style="white-space: nowrap;">
 											<tr>
 												<th rowspan="2" style="width: 10px;">#</th>
 												<th colspan="2" style="border-right: 2px solid #dee2e6;"></th>
@@ -135,8 +156,18 @@ scratch. This page gets rid of all links and provides the needed markup only.
 										</thead>
 										<tbody>
 											<?php $kolom = array_column($li_koperasi, 'noloan');
+											$null = 0;
+											$selisih = 0;
 											$plafond_bank = 0;
 											$os_bank = 0;
+
+											$tenor_minus = 0;
+											$tenor_plus = 0;
+											$plafond_minus = 0;
+											$plafond_plus = 0;
+											$os_minus = 0;
+											$os_plus = 0;
+
 											$plafond_kop = array_sum(array_column($li_koperasi, 'plafond'));
 											$os_kop = array_sum(array_column($li_koperasi, 'ospokok'));
 											foreach ($li_bank as $key => $val) {
@@ -155,16 +186,30 @@ scratch. This page gets rid of all links and provides the needed markup only.
 												echo '<td class="text-center" style="border-right: 2px solid #dee2e6;">' . number_format($val['ospokok'], 2, '.', ',') . '</td>';
 
 												if ($cari !== false) {
-													$sisa_tenor = (date('Y', strtotime($li_koperasi[$cari]['tgl_ospokok'])) - date('Y', strtotime($li_koperasi[$cari]['tgl_pencairan']))) * 12 + (date('m', strtotime($li_koperasi[$cari]['tgl_ospokok'])) - date('m', strtotime($li_koperasi[$cari]['tgl_pencairan'])));
+													$tenor_sisa = (date('Y', strtotime($li_koperasi[$cari]['tgl_ospokok'])) - date('Y', strtotime($li_koperasi[$cari]['tgl_pencairan']))) * 12 + (date('m', strtotime($li_koperasi[$cari]['tgl_ospokok'])) - date('m', strtotime($li_koperasi[$cari]['tgl_pencairan'])));
 
-													echo '<td class="text-center">' . ($li_koperasi[$cari]['tenor'] - $sisa_tenor) . ' bulan</td>';
+													echo '<td class="text-center">' . ($li_koperasi[$cari]['tenor'] - $tenor_sisa) . ' bulan';
+													if (($li_koperasi[$cari]['tenor'] - $tenor_sisa) < ($val['tenor'] - $sisa_tenor)) {
+														$tenor_minus++;
+														echo '<i class="fa fa-fw fa-caret-down" style="color: red"></i><br>';
+														echo '<small class="text-red">(' . (($li_koperasi[$cari]['tenor'] - $tenor_sisa) - ($val['tenor'] - $sisa_tenor)) . ' bulan)</small>';
+													}
+													if (($li_koperasi[$cari]['tenor'] - $tenor_sisa) > ($val['tenor'] - $sisa_tenor)) {
+														$tenor_plus++;
+														echo '<i class="fa fa-fw fa-caret-up" style="color: green"></i><br>';
+														echo '<small class="text-success">' . (($li_koperasi[$cari]['tenor'] - $tenor_sisa) - ($val['tenor'] - $sisa_tenor)) . ' bulan</small>';
+													}
+													echo '</td>';
+
 													echo '<td class="text-center">';
 													echo number_format($li_koperasi[$cari]['plafond'], 2, '.', ',');
 													if ($li_koperasi[$cari]['plafond'] < $val['plafond']) {
+														$plafond_minus++;
 														echo '<i class="fa fa-fw fa-caret-down" style="color: red"></i><br>';
 														echo '<small class="text-red">(' . number_format($li_koperasi[$cari]['plafond'] - $val['plafond'], 2, '.', ',') . ')</small>';
 													}
 													if ($li_koperasi[$cari]['plafond'] > $val['plafond']) {
+														$plafond_plus++;
 														echo '<i class="fa fa-fw fa-caret-up" style="color: green"></i><br>';
 														echo '<small class="text-success">' . number_format($li_koperasi[$cari]['plafond'] - $val['plafond'], 2, '.', ',') . '</small>';
 													}
@@ -173,15 +218,20 @@ scratch. This page gets rid of all links and provides the needed markup only.
 													echo '<td class="text-center">';
 													echo number_format($li_koperasi[$cari]['ospokok'], 2, '.', ',');
 													if ($li_koperasi[$cari]['ospokok'] < $val['ospokok']) {
+														$os_minus++;
 														echo '<i class="fa fa-fw fa-caret-down" style="color: red"></i><br>';
 														echo '<small class="text-red">(' . number_format($li_koperasi[$cari]['ospokok'] - $val['ospokok'], 2, '.', ',') . ')</small>';
 													}
 													if ($li_koperasi[$cari]['ospokok'] > $val['ospokok']) {
+														$os_plus++;
 														echo '<i class="fa fa-fw fa-caret-up" style="color: green"></i><br>';
 														echo '<small class="text-success">' . number_format($li_koperasi[$cari]['ospokok'] - $val['ospokok'], 2, '.', ',') . '</small>';
 													}
 													echo '</td>';
 												} else {
+													$null++;
+													// $selisih++;
+													// $selisih_tenor++;
 													echo '<td class="text-center">#N/A</td>';
 													echo '<td class="text-center">#N/A</td>';
 													echo '<td class="text-center">#N/A</td>';
@@ -211,5 +261,23 @@ scratch. This page gets rid of all links and provides the needed markup only.
 			'searching': false,
 			'info': false,
 			'lengthChange': false
+		});
+
+		$(document).ready(function() {
+			if (<?= $null; ?> != 0) {
+				$('#display').append('<li>Terdapat ' + <?= $null; ?> + ' nasabah koperasi tidak ditemukan pada data bank.</li>');
+			}
+
+			if (<?= ($plafond_minus + $plafond_plus) ?> != 0) {
+				$('#display').append('<li>Terdapat ' + <?= $plafond_minus + $plafond_plus ?> + ' nasabah dengan plafond di koperasi tidak sesuai dengan plafond bank.</li>');
+			}
+
+			if (<?= $os_minus ?> != 0) {
+				$('#display').append('<li>Terdapat ' + <?= $os_minus ?> + ' nasabah dengan outstanding di koperasi lebih kecil dari outstanding bank.</li>');
+			}
+
+			if (<?= $tenor_minus ?> != 0) {
+				$('#display').append('<li>Terdapat ' + <?= $tenor_minus ?> + ' nasabah dengan sisa tenor di koperasi lebih kecil dari sisa tenor bank.</li>');
+			}
 		});
 	</script>

@@ -26,17 +26,19 @@
 			'autoclose': true,
 			'clearBtn': true
 		});
+		
+		$('.invalid-feedback').css('width', 'max-content');
 	});
 
-	function reload_table() {
-		$('#tbl_example').DataTable({
-			ordering: false,
-			rowReorder: {
-				selector: 'td:nth-child(2)'
-			},
-			responsive: true
-		});
-	}
+	// function reload_table() {
+	// 	$('#tbl_example').DataTable({
+	// 		ordering: false,
+	// 		rowReorder: {
+	// 			selector: 'td:nth-child(2)'
+	// 		},
+	// 		responsive: true
+	// 	});
+	// }
 
 	// # check number
 	function CheckNumeric() {
@@ -94,14 +96,5 @@
 		}
 
 		return s.join(dec)
-	}
-
-
-	function tglIndo(tgl) {
-		var exp = tgl.split('-');
-
-		var arrBln = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'];
-
-		return exp[2] + ' ' + arrBln[exp[1] - 1] + ' ' + exp[0];
 	}
 </script>

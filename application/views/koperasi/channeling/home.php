@@ -24,6 +24,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							<button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#upd_modal">
 								<i class="fa fa-fw fa-cloud-upload-alt"></i> Upload
 							</button>
+							<!-- <a href="" class="btn btn-sm btn-danger float-right">Report Rekonsel</a> -->
 						</div>
 					</div>
 				</div><!-- /.container-fluid -->
@@ -38,49 +39,57 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							<div class="card card-primary card-outline">
 								<div class="card-header">
 									<a href="<?= site_url('sales/koperasi/channeling/temp_rekonsel') ?>" class="btn btn-sm btn-link float-right"> Template Rekonsialisasi</a>
-									<!-- <a href="#" class="btn btn-sm btn-link float-right"> Rekonsialisasi (<?= $list_rekon['rekon'] < 0 ? 0 : $list_rekon['rekon']; ?>)</a> -->
+									<!-- <a href="#" class="btn btn-sm btn-link float-right"> Terekonsialisasi (<?= $list_rekon['rekon'] < 0 ? 0 : $list_rekon['rekon']; ?>)</a> -->
 								</div>
 								<div class="card-body">
-									<table class="table table-bordered table-hover display nowrap" id="tbl_example">
+									<table class="table table-bordered table-hover nowrap" id="tbl_example">
 										<thead>
 											<tr>
 												<th>#</th>
-												<th>Rek. Pembayaran</th>
+												<!-- <th>Rek. Pembayaran</th> -->
 												<th>Nomor CIF</th>
 												<th>Nama Koperasi</th>
 												<th>Nama Area</th>
 												<th>Nom Pencairan</th>
 												<th>Outstanding</th>
 												<th class="text-center">Status</th>
-												<th class="text-center" style="width: 100px;">Opsi</th>
+												<th class="text-center">Opsi</th>
 											</tr>
 										</thead>
 										<tbody>
 											<?php foreach ($list_koperasi as $key => $val) : ?>
 												<tr>
 													<td><?= $key + 1; ?></td>
-													<td><?= $val['rek_pembayaran']; ?></td>
+													<!-- <td><?= $val['rek_pembayaran']; ?></td> -->
 													<td><?= $val['nocif_kop']; ?></td>
 													<td>
 														<?= $val['nm_koperasi']; ?>
 														<br>
-														<small>Tahap <?= $val['tahap_pencairan'] ?> - <?= $val['anggota'] ?> anggota</small>
+														<small>Tahap <?= $val['tahap_pencairan'] ?> - <?= $val['anggota'] == 0 ? 0 : $val['anggota'] ?> anggota</small>
 													</td>
 													<td><?= $val['nm_area']; ?></td>
 													<td class="text-right">
-														<?= number_format($val['plafond'], 2, '.', ',') ?>
+														<?= number_format($val['nom_pencairan'], 2, '.', ',') ?>
 														<br>
 														<small><?= $val['tgl_pencairan'] == null ? '-' : tgl_indo($val['tgl_pencairan']) ?></small>
 													</td>
 													<td class="text-right">
-														<?= number_format($val['ospokok'], 2, '.', ',') ?>
+														<?= number_format($val['os_pokok'], 2, '.', ',') ?>
 														<br>
 														<small><?= $val['tgl_ospokok'] == null ? '-' : tgl_indo($val['tgl_ospokok']) ?></small>
 													</td>
 													<td class="text-center">
-														<?php if ($val['status'] == 'Belum Terekonsialisasi') : ?>
+														<?php // func untuk rekonsel tiap 3 bulan
+														$timeStart = strtotime(date($val['tgl_rekon']));
+														$timeEnd = strtotime(date('Y-m-d'));
+														$numBulan = 1 + (date('Y', $timeEnd) - date('Y', $timeStart)) * 12;
+														$numBulan += (date('m', $timeEnd) - date('m', $timeStart)); ?>
+
+														<?php if ($val['status'] == 'Belum Terekonsialisasi' && $numBulan % 2 == 0) : ?>
 															<small class="text-warning"><?= $val['status']; ?></small><br>
-															<span class="btn btn-sm btn-link" onclick="btn_rekon('<?= $val['id'] ?>')">Upload Rekonsialisasi</span>
+															<?php if ($val['anggota'] > 0) : ?>
+																<span class="btn btn-sm btn-link" onclick="btn_rekon('<?= $val['id'] ?>')">Upload Rekonsialisasi</span>
+															<?php endif; ?>
 														<?php elseif ($val['status'] == 'Proses Rekonsialisasi') : ?>
 															<a href="<?= site_url('sales/koperasi-channeling/rekonsel/' . base64_encode($val['id'])) ?>" class="btn btn-sm btn-link">
 																<i class="fa fa-fw fa-xs fa-sync"></i> Rekonsialisasi
@@ -91,7 +100,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
 															</small><br>
 															<small><?= tgl_indo($val['tgl_rekon']); ?></small>
 														<?php endif; ?>
-														<!-- <span class="badge <?= $val['anggota'] > 0 ? 'badge-info' : 'badge-danger' ?>"><?= $val['anggota'], ' anggota'; ?></span> -->
 													</td>
 													<td class="text-center">
 														<a href="<?= site_url('sales/koperasi-channeling/details/' . base64_encode($val['id'])) ?>" class="btn btn-xs btn-outline-info" title="Anggota"><i class="fas fa-fw fa-users"></i></a>
@@ -143,8 +151,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
 						<hr>
 						<label>3. Import file template</label>
-						<p>Format file yang dapat di import hanya CSV.</p>
-
 						<input type="hidden" class="form-control" name="kode_ao" value="<?= $_SESSION['kd_ao'] ?>">
 						<div class="form-group row">
 							<label class="col-md-2 col-form-label">File Upload</label>
@@ -153,6 +159,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 									<input type="file" class="custom-file-input" name="upd_file" accept=".csv" required>
 									<label class="custom-file-label" for="upd_file">Choose file</label>
 								</div>
+								<small class="text-muted">Format file yang dapat di import hanya CSV</small>
 							</div>
 						</div>
 					</div>
@@ -178,8 +185,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
 				</div>
 				<form id="fm_rekon">
 					<div class="modal-body">
-						<label>Import file template rekonsialisasi</label>
-						<p>Format file yang dapat di import hanya CSV.</p>
+						<label>Input data template rekonsialisasi</label>
+						<p>Input data koperasi yang akan di rekonsialisasi ke dalam file template yang sudah di download. Pastikan bahwa data koperasi sesuai dengan header kolom yang disediakan dalam template.</p>
+
+						<p class="text-danger">PENTING: Dilarang untuk merubah atau menghapus struktur header kolom yang disediakan dalam template upload. Hal ini dilakukan agar proses import bisa berjalan lancar.</p>
+						<p class="text-danger">File yang sudah di upload tidak bisa dihapus, pastikan bahwa file yang akan di upload telah sesuai.</p>
 
 						<input type="hidden" class="form-control" name="kode_ao" value="<?= $_SESSION['kd_ao'] ?>">
 						<input type="hidden" class="form-control" name="id_koperasi" id="id_koperasi">
@@ -192,6 +202,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 									<input type="file" class="custom-file-input" name="upd_file" accept=".csv" required>
 									<label class="custom-file-label" for="upd_file">Choose file</label>
 								</div>
+								<small class="text-muted">Format file yang dapat di import hanya CSV</small>
 							</div>
 						</div>
 					</div>
@@ -240,15 +251,15 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							</div>
 						</div>
 						<div class="form-group row">
-							<label for="tgl_cair" class="col-sm-3 col-form-label">Tgl Pencarain</label>
-							<div class="col-sm-3">
-								<div class="input-group">
-									<div class="input-group-prepend">
-										<div class="input-group-text"><i class="fa fa-fw fa-calendar-alt"></i></div>
-									</div>
-									<input type="text" class="form-control date" id="tgl_cair" name="tgl_cair">
-									<div class="invalid-feedback" id="tgl_cair-feedback"></div>
-								</div>
+							<label for="nm_koperasi" class="col-sm-3 col-form-label">Nama Perusahaan</label>
+							<div class="col-sm-5">
+								<input type="text" class="form-control" id="nm_perusahaan" name="nm_perusahaan" list="li_perusahaan">
+								<datalist id="li_perusahaan">
+									<?php foreach ($li_perusahaan as $val) : ?>
+										<option value="<?= $val['nm_perusahaan'] ?>"><?= $val['nm_perusahaan'] ?></option>
+									<?php endforeach; ?>
+								</datalist>
+								<div class="invalid-feedback" id="nm_perusahaan-feedback"></div>
 							</div>
 						</div>
 						<div class="form-group row">
@@ -309,6 +320,22 @@ scratch. This page gets rid of all links and provides the needed markup only.
 			$('.btn-link').removeClass('fa-spinner');
 		});
 
+		if ('<?= $this->session->flashdata('warning') ?>' != '') {
+			Swal.fire({
+				title: 'Oops!',
+				icon: 'warning',
+				text: '<?= $this->session->flashdata('warning') ?>'
+			});
+		}
+
+		if ('<?= $this->session->flashdata('success') ?>' != '') {
+			Swal.fire({
+				title: 'Yeah!',
+				icon: 'success',
+				text: '<?= $this->session->flashdata('success') ?>'
+			});
+		}
+
 		$(document).on('change', 'input[type="file"]', function(evt) {
 			var filename = $(this).val();
 			if (filename == undefined || filename == "") {
@@ -321,10 +348,16 @@ scratch. This page gets rid of all links and provides the needed markup only.
 		$('#tbl_example').dataTable({
 			'ordering': false,
 			'responsive': true
+			// 'scrollX': true
 		});
 
 		// clear invalid validation
-		$('input[type="text"]').on('keypress', function() {
+		// $('input[type="text"]').on('keypress', function() {
+		// 	$(this).removeClass('is-invalid');
+		// 	$($(this).attr('id') + '-feedback').empty();
+		// });
+
+		$('input[type="text"]').on('change', function() {
 			$(this).removeClass('is-invalid');
 			$($(this).attr('id') + '-feedback').empty();
 		});
@@ -336,7 +369,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
 		$('#formModal').on('hidden.bs.modal', function() {
 			$('#fm_modal')[0].reset();
-			$('#noloan').prop('readonly', false);
+			$('.selectpicker').selectpicker('refresh');
+			$('#rek_pembayaran').prop('readonly', false);
 			$('input').removeClass('is-invalid');
 			$('.invalid-feedback').empty();
 		});
@@ -525,8 +559,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					$('#rek_pembayaran').val(res.rek_pembayaran).prop('readonly', true);
 					$('#no_cif').val(res.nocif_kop);
 					$('#nm_koperasi').val(res.nm_koperasi);
+					$('#nm_perusahaan').val(res.nm_perusahaan);
 					$('#thp_cair').val(res.tahap_pencairan);
-					$('#tgl_cair').val(tglIndo(res.tgl_pencairan));
+					// $('#tgl_cair').val(tglIndo(res.tgl_pencairan));
 					$('#nm_area').val(res.kd_area);
 
 					$('.selectpicker').selectpicker('refresh');
@@ -583,59 +618,61 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					$('#detailModalLabel').text('Detail Koperasi');
 
 					html += `<div class="row">
-									<label class="col-md-2">Rek. Pembayaran</label>
-									<div class="col-md-3">
-										` + res.koperasi.rek_pembayaran + `
+									<label class="col-md-2">Nama Perusahaan</label>
+									<div class="col-md-4">
+										` + res.koperasi.nm_perusahaan + `
 									</div>
 									<label class="col-md-2">Nama Koperasi</label>
-									<div class="col-md-3">
+									<div class="col-md-4">
 										` + res.koperasi.nocif_kop + ` - ` + res.koperasi.nm_koperasi + `
 									</div>
 								</div>`;
 
 					html += `<div class="row">
-									<label class="col-md-2">Tahap Pencairan</label>
-									<div class="col-md-3">
-										Tahap ` + res.koperasi.tahap_pencairan + `
+									<label class="col-md-2">Rek. Pembayaran</label>
+									<div class="col-md-4">
+										` + res.koperasi.rek_pembayaran + `
 									</div>
 									<label class="col-md-2">Nama Area</label>
-									<div class="col-md-3">
+									<div class="col-md-4">
 										` + res.koperasi.nm_area + `
 									</div>
 								</div>`;
 
 					html += `<div class="row">
-									<label class="col-md-2">Jenis Pembiayaan</label>
-									<div class="col-md-3">
-										` + res.koperasi.jns_pembiayaan + `
+									<label class="col-md-2">Tahap Pencairan</label>
+									<div class="col-md-4">
+										Tahap ` + res.koperasi.tahap_pencairan + `
 									</div>
 									<label class="col-md-2">Nominal Pencairan</label>
-									<div class="col-md-3">
+									<div class="col-md-4">
 										Rp ` + number_format(res.koperasi.nom_pencairan, 2, '.', ',') + `
 									</div>
 								</div>`;
 
-					// html += `<div class="row">
-					// 				<label class="col-md-2">Tunggakan</label>
-					// 				<div class="col-md-3">
-					// 					Rp ` + number_format(res.koperasi.tunggakan, 2, '.', ',') + `
-					// 				</div>
-					// 				<label class="col-md-2">Outstanding Pokok</label>
-					// 				<div class="col-md-3">
-					// 					Rp ` + number_format(res.koperasi.os_pokok, 2, '.', ',') + `
-					// 				</div>
-					// 			</div>`;
-
 					html += `<div class="row">
-									<label class="col-md-2">Jumlah Anggota</label>
-									<div class="col-md-3">
-										` + res.anggota.length + ` Anggota</span>
+									<label class="col-md-2">Jenis Pembiayaan</label>
+									<div class="col-md-4">
+										` + res.koperasi.jns_pembiayaan + `
 									</div>
 									<label class="col-md-2">Outstanding Pokok</label>
-									<div class="col-md-3">
+									<div class="col-md-4">
 										Rp ` + number_format(res.koperasi.os_pokok, 2, '.', ',') + `
 									</div>
 								</div>`;
+
+					html += `<div class="row">
+									<label class="col-md-2">Jumlah Anggota</label>
+									<div class="col-md-4">
+										` + res.anggota.length + ` Anggota</span>
+									</div>`;
+					if (res.koperasi.rekon > 0) {
+						html += `<label class="col-md-2">Rekap Rekonsialisasi</label>
+									<div class="col-md-4">
+										` + res.koperasi.rekon + ` Bulan <a href='<?= site_url('sales/koperasi-channeling/rekap/') ?>` + params + `'><i class="fa fa-fw fa-binoculars"></i></a></span>
+									</div>`;
+					}
+					html += `</div>`;
 
 					$('#detailModal .modal-body').html(html);
 				}

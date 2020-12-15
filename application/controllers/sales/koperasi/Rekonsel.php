@@ -18,32 +18,35 @@ class Rekonsel extends CI_Controller
 	public function rekon_channeling($id)
 	{
 		$id = base64_decode($id);
-		$page = 'koperasi/rekon_channeling';
+		$page = 'koperasi/channeling/rekonsel';
 
-		$data['title'] = 'Rekonsialisasi Koperasi Channeling';
-		$data['breadcrumb'] = '<li class="breadcrumb-item"><a href="' . site_url('sales/home') . '">Home</a></li>';
-		$data['breadcrumb'] .= '<li class="breadcrumb-item"><a href="' . site_url('sales/koperasi-channeling') . '">Koperasi</a></li>';
-		$data['breadcrumb'] .= '<li class="breadcrumb-item active">Rekonsialisasi</li>';
+		$cek = $this->db->get_where('tbl_koperasi', ['id' => $id, 'status' => 'Proses Rekonsialisasi'])->num_rows();
+		if ($cek > 0) {
+			$data['title'] = 'Rekonsialisasi Koperasi Channeling';
+			$data['breadcrumb'] = '<li class="breadcrumb-item"><a href="' . site_url('sales/home') . '">Home</a></li>';
+			$data['breadcrumb'] .= '<li class="breadcrumb-item"><a href="' . site_url('sales/koperasi-channeling') . '">Koperasi</a></li>';
+			$data['breadcrumb'] .= '<li class="breadcrumb-item active">Rekonsialisasi</li>';
 
-		$data['bank'] = $this->db->select('a.id, count(b.noloan_anggota) as anggota, sum(b.nom_pencairan) as plafond, sum(b.os_pokok) as ospokok, a.tgl_ospokok')->from('tbl_koperasi a')
-			->join('tbl_anggota_channeling b', 'a.id = b.id_koperasi', 'left')
-			->join('tbl_area c', 'a.kd_area = c.kd_area', 'left')
-			->where(['a.id' => $id, 'a.fk_kode_ao' => $this->session->userdata('kd_ao'), 'a.jns_pembiayaan' => 'Channeling', 'a.status' => 'Proses Rekonsialisasi'])
-			->get()->row_array();
+			$qry_bank = "select id_koperasi as id, count(noloan_anggota) as anggota, sum(nom_pencairan) as plafond, tgl_ospokok, sum(os_pokok) as ospokok from tbl_anggota_channeling ";
+			$qry_bank .= "where id_koperasi = " . $id . " and ficmisDate = (select max(ficmisDate) as ficmisDate from tbl_anggota_channeling where id_koperasi = " . $id . ")";
+			$data['bank'] = $this->db->query($qry_bank)->row_array();
 
-		$data['koperasi'] = $this->db->select('id_koperasi, count(noloan) as anggota, sum(plafond) as plafond, sum(ospokok) as ospokok, tgl_ospokok')->from('tbl_rekon_channeling')
-			->where(['id_koperasi' => $id, 'kode_ao' => $this->session->userdata('kd_ao')])
-			->get()->row_array();
+			$data['koperasi'] = $this->db->select('id_koperasi, count(noloan) as anggota, sum(plafond) as plafond, sum(ospokok) as ospokok, tgl_ospokok')->from('tbl_rekon_channeling')
+				->where(['id_koperasi' => $id, 'kode_ao' => $_SESSION['kd_ao'], 'rekon_date' => '0000-00-00'])
+				->get()->row_array();
 
-		$data['li_bank'] = $this->db->select('id_koperasi, noloan_anggota, nm_anggota, tenor, tgl_pencairan, nom_pencairan as plafond, tgl_ospokok, os_pokok as ospokok')->from('tbl_anggota_channeling')
-			->where(['id_koperasi' => $id])
-			->get()->result_array();
+			$qry_li_bank = "select id_koperasi, noloan_anggota, nm_anggota, tenor, tgl_pencairan, nom_pencairan as plafond, tgl_ospokok, os_pokok as ospokok from tbl_anggota_channeling ";
+			$qry_li_bank .= "where id_koperasi = " . $id . " and ficmisDate = (select max(ficmisDate) as ficmisDate from tbl_anggota_channeling where id_koperasi = " . $id . ")";
+			$data['li_bank'] = $this->db->query($qry_li_bank)->result_array();
 
-		$data['li_koperasi'] = $this->db->select('id_koperasi, noloan, nm_anggota, tenor, tgl_pencairan, plafond, tgl_ospokok, ospokok')->from('tbl_rekon_channeling')
-			->where(['id_koperasi' => $id])
-			->get()->result_array();
+			$data['li_koperasi'] = $this->db->select('id_koperasi, noloan, nm_anggota, tenor, tgl_pencairan, plafond, tgl_ospokok, ospokok')->from('tbl_rekon_channeling')
+				->where(['id_koperasi' => $id])
+				->get()->result_array();
 
-		$this->load->view($page, $data);
+			$this->load->view($page, $data);
+		} else {
+			return redirect(site_url('sales/koperasi-channeling'));
+		}
 	}
 
 	public function export($id)
@@ -120,24 +123,23 @@ class Rekonsel extends CI_Controller
 		}
 	}
 
-	public function update($id)
+	public function update()
 	{
-		$id = base64_decode($id);
-		$rekon = $this->db->get_where('tbl_rekon_channeling', ['id_koperasi' => $id])->result_array();
+		$this->db->trans_start();
+		$this->db->update('tbl_koperasi', ['tgl_rekon' => date('Y-m-d'), 'status' => 'Terekonsialisasi'], ['id' => input('id')]);
+		$this->db->update('tbl_rekon_channeling', ['rekon_date' => date('Y-m-d')], ['id_koperasi' => input('id'), 'tgl_ospokok' => input('tgl_os')]);
+		$this->db->update('tbl_anggota_channeling', ['tgl_rekon' => date('Y-m-d')], ['id_koperasi' => input('id'), 'tgl_ospokok' => input('tgl_os')]);
+		$this->db->trans_complete();
 
-		$this->db->trans_begin();
-		foreach ($rekon as $val) {
-			$this->db->update('tbl_anggota_channeling', ['os_pokok' => $val['ospokok'], 'tgl_ospokok' => $val['tgl_ospokok']], ['id_koperasi' => $id]);
-		}
-		$this->db->update('tbl_koperasi', ['status' => 'Terekonsialisasi', 'tgl_rekon' => date('Y-m-d')], ['id' => $id]);
-
-		if ($this->db->trans_status() === false) {
+		if ($this->db->trans_status() === FALSE) {
 			$this->db->trans_rollback();
-			redirect(site_url('sales/koperasi-channeling/rekonsel/' . base64_encode($id)));
+			$this->session->set_flashdata('warning', 'Data Gagal Terekonsialisasi.');
 		} else {
 			$this->db->trans_commit();
-			redirect(site_url('sales/koperasi-channeling'));
+			$this->session->set_flashdata('success', 'Data Berhasil Terekonsialisasi.');
 		}
+
+		redirect(site_url('sales/koperasi-channeling'));
 	}
 
 	public function reject($id)
@@ -148,5 +150,55 @@ class Rekonsel extends CI_Controller
 		$this->db->update('tbl_koperasi', ['status' => 'Belum Terekonsialisasi'], ['id' => $id]);
 
 		redirect(site_url('sales/koperasi-channeling'));
+	}
+
+
+	// history hasil rekonsel
+	public function rekap($id)
+	{
+		$data['title'] = 'Rekap Rekonsialisasi End User';
+		$data['breadcrumb'] = '<li class="breadcrumb-item"><a href="' . site_url('sales/home') . '">Home</a></li>';
+		$data['breadcrumb'] .= '<li class="breadcrumb-item"><a href="' . site_url('sales/koperasi-channeling') . '">Koperasi</a></li>';
+		$data['breadcrumb'] .= '<li class="breadcrumb-item active">Rekap</li>';
+
+		// $data['bulan_os'] = $this->db->get_where('tbl_rekon_channeling', ['id_koperasi' => $id, 'rekon_date !=' => '0000-00-00'])->result_array();		
+		$qry = "select id_koperasi, rekon_date from tbl_rekon_channeling where id_koperasi = ".$id. " and rekon_date != '0000-00-00'";
+		$data['rekon'] = $this->db->query($qry)->result_array();
+
+		$this->load->view('koperasi/channeling/rekonsel_report', $data);
+	}
+
+	public function result()
+	{
+		$page = 'koperasi/channeling/rekonsel_report';
+		$id = input('id_kop');
+		$tgl = input('bln_rekon');
+
+		// $data = $this->db->get_where('tbl_rekon_channeling', ['id_kopersai' => $id, 'tgl_ospokok' => $tgl])->num_rows();
+		$data['title'] = 'Rekap Rekonsialisasi End User';
+		$data['breadcrumb'] = '<li class="breadcrumb-item"><a href="' . site_url('sales/home') . '">Home</a></li>';
+		$data['breadcrumb'] .= '<li class="breadcrumb-item"><a href="' . site_url('sales/koperasi-channeling') . '">Koperasi</a></li>';
+		$data['breadcrumb'] .= '<li class="breadcrumb-item active">Rekap</li>';
+
+		$qry_bank = "select id_koperasi as id, count(noloan_anggota) as anggota, sum(nom_pencairan) as plafond, tgl_ospokok, sum(os_pokok) as ospokok from tbl_anggota_channeling ";
+		$qry_bank .= "where tgl_rekon = '" . $tgl . "' and id_koperasi = '" . $id . "'";
+		$data['bank'] = $this->db->query($qry_bank)->row_array();
+
+		$data['koperasi'] = $this->db->select('id_koperasi, count(noloan) as anggota, sum(plafond) as plafond, sum(ospokok) as ospokok, tgl_ospokok')->from('tbl_rekon_channeling')
+			->where(['id_koperasi' => $id, 'rekon_date' => $tgl])
+			->get()->row_array();
+
+		$qry_li_bank = "select id_koperasi, noloan_anggota, nm_anggota, tenor, tgl_pencairan, nom_pencairan as plafond, tgl_ospokok, os_pokok as ospokok from tbl_anggota_channeling ";
+		$qry_li_bank .= "where tgl_rekon = '" . $tgl . "' and id_koperasi = '" . $id . "'";
+		$data['li_bank'] = $this->db->query($qry_li_bank)->result_array();
+
+		$data['li_koperasi'] = $this->db->select('id_koperasi, noloan, nm_anggota, tenor, tgl_pencairan, plafond, tgl_ospokok, ospokok')->from('tbl_rekon_channeling')
+			->where(['id_koperasi' => $id, 'rekon_date' => $tgl])
+			->get()->result_array();
+
+		$qry = "select id_koperasi, rekon_date from tbl_rekon_channeling where id_koperasi = " . $id . " and rekon_date != '0000-00-00'";
+		$data['rekon'] = $this->db->query($qry)->result_array();
+
+		$this->load->view($page, $data);
 	}
 }

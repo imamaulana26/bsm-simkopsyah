@@ -17,35 +17,24 @@ class Channeling extends CI_Controller
 
 	public function index()
 	{
-		$page = 'koperasi/channeling';
+		$page = 'koperasi/channeling/home';
 
 		$data['title'] = 'Daftar Koperasi Channeling';
 		$data['breadcrumb'] = '<li class="breadcrumb-item"><a href="' . site_url('sales/home') . '">Home</a></li>';
 		$data['breadcrumb'] .= '<li class="breadcrumb-item active">Koperasi</li>';
 
-		// $data['list_koperasi'] = $this->db->select('a.*, c.nm_area, count(b.nocif_anggota) as anggota, sum(b.nom_pencairan) as plafond, sum(b.os_pokok) as ospokok, sum(b.tunggakan) as tunggakan')->from('tbl_koperasi a')
-		$data['list_koperasi'] = $this->db->select('a.*, c.nm_area, count(b.nocif_anggota) as anggota, sum(b.nom_pencairan) as plafond, sum(b.os_pokok) as ospokok')->from('tbl_koperasi a')
-			->join('tbl_anggota_channeling b', 'a.id = b.id_koperasi', 'left')
-			->join('tbl_area c', 'a.kd_area = c.kd_area', 'left')
-			->where(['a.fk_kode_ao' => $this->session->userdata('kd_ao'), 'a.jns_pembiayaan' => 'Channeling'])
-			->group_by('a.rek_pembayaran, a.tahap_pencairan')->order_by('a.id', 'asc')
-			->get()->result_array();
+		$sql = "select * from tbl_koperasi a ";
+		$sql .= "left join (select id_koperasi, max(ficmisDate) as ficmisDate, count(distinct(noloan_anggota)) as anggota from tbl_anggota_channeling group by id_koperasi) b on a.id = b.id_koperasi ";
+		$sql .= "left join tbl_area c on a.kd_area = c.kd_area ";
+		$sql .= "where a.fk_kode_ao = '" . $_SESSION['kd_ao'] . "' and a.jns_pembiayaan = 'Channeling' ";
+		$sql .= "order by a.id asc ";
+		$data['list_koperasi'] = $this->db->query($sql)->result_array();
 
 		$data['list_rekon'] = $this->db->select('count(distinct(id_koperasi)) as rekon')->from('tbl_rekon_channeling')
 			->where(['kode_ao' => $this->session->userdata('kd_ao')])
 			->get()->row_array();
 
-		foreach ($data['list_koperasi'] as $val) {
-			$this->db->update(
-				'tbl_koperasi',
-				[
-					'nom_pencairan' => $val['plafond'],
-					'os_pokok' => $val['ospokok'],
-					// 'tunggakan' => $val['tunggakan']
-				],
-				['id' => $val['id']]
-			);
-		}
+		$data['li_perusahaan'] = $this->db->select('distinct(nm_perusahaan)')->from('tbl_koperasi')->where(['fk_kode_ao' => $_SESSION['kd_ao']])->order_by('nm_perusahaan asc')->get()->result_array();
 
 		$this->load->view($page, $data);
 	}
@@ -64,7 +53,7 @@ class Channeling extends CI_Controller
 			$data['status'] = false;
 		} else if (strlen(input('rek_pembayaran')) != 10) {
 			$data['inputerror'][] = 'rek_pembayaran';
-			$data['error'][] = 'No kontrak tidak valid';
+			$data['error'][] = 'Rek. pembayaran tidak valid';
 			$data['status'] = false;
 		}
 
@@ -83,6 +72,12 @@ class Channeling extends CI_Controller
 			$data['error'][] = 'Nama koperasi harus diisi';
 			$data['status'] = false;
 		}
+
+		if (input('nm_perusahaan') == '') {
+			$data['inputerror'][] = 'nm_perusahaan';
+			$data['error'][] = 'Nama perusahaan harus diisi';
+			$data['status'] = false;
+		}
 		// else if (!preg_match('/^[a-zA-Z ]+$/', input('nm_koperasi'))) {
 		// 	$data['inputerror'][] = 'nm_koperasi';
 		// 	$data['error'][] = 'Nama koperasi tidak valid';
@@ -99,11 +94,11 @@ class Channeling extends CI_Controller
 			$data['status'] = false;
 		}
 
-		if (input('tgl_cair') == '') {
-			$data['inputerror'][] = 'tgl_cair';
-			$data['error'][] = 'Tgl cair harus diisi';
-			$data['status'] = false;
-		}
+		// if (input('tgl_cair') == '') {
+		// 	$data['inputerror'][] = 'tgl_cair';
+		// 	$data['error'][] = 'Tgl cair harus diisi';
+		// 	$data['status'] = false;
+		// }
 
 		if (input('nm_area') == '') {
 			$data['inputerror'][] = 'nm_area';
@@ -127,16 +122,13 @@ class Channeling extends CI_Controller
 
 	public function get_koperasi($key)
 	{
-		$data['koperasi'] = $this->db->select('a.*, b.nm_area')->from('tbl_koperasi a')
+		$data['koperasi'] = $this->db->select('a.*, b.nm_area, count(distinct(rekon_date)) as rekon')->from('tbl_koperasi a')
 			->join('tbl_area b', 'a.kd_area = b.kd_area', 'left')
+			->join('tbl_rekon_channeling c', 'a.id = c.id_koperasi', 'left')
 			->where(['a.id' => $key])->get()->row_array();
-		$data['anggota'] = $this->db->get_where(
-			'tbl_anggota_channeling',
-			[
-				'fk_rek_pembayaran' => $data['koperasi']['rek_pembayaran'],
-				'tgl_pencairan' => $data['koperasi']['tgl_pencairan']
-			]
-		)->result_array();
+
+		$qry = "select id_koperasi, max(ficmisDate) as ficmisDate, count(distinct(noloan_anggota)) as anggota, nom_pencairan, os_pokok from tbl_anggota_channeling where id_koperasi = " . $data['koperasi']['id'] . " group by id_koperasi";
+		$data['anggota'] = $this->db->query($qry)->result_array();
 
 		echo json_encode($data);
 		exit;
@@ -147,23 +139,26 @@ class Channeling extends CI_Controller
 		$this->_validasi_koperasi();
 
 		$data = array(
+			'fk_kode_ao' => $_SESSION['kd_ao'],
 			'rek_pembayaran' => input('rek_pembayaran'),
 			'nocif_kop' => input('no_cif'),
 			'nm_koperasi' => input('nm_koperasi'),
+			'nm_perusahaan' => input('nm_perusahaan'),
 			'tahap_pencairan' => input('thp_cair'),
 			'kd_area' => input('nm_area'),
 			'jns_pembiayaan' => 'Channeling',
-			'tgl_pencairan' => tgl_db(input('tgl_cair')),
+			'status' => 'Belum Terekonsialisasi',
+			// 'tgl_pencairan' => tgl_db(input('tgl_cair')),
 			'createDate' => date('Y-m-d H:i:s')
 		);
 
-		$cek = $this->db->get_where('tbl_koperasi', ['noloan_kop' => input('noloan')]);
+		$cek = $this->db->get_where('tbl_koperasi', ['id' => input('id')]);
 		if ($cek->num_rows() > 0) {
 			$status = array(
 				'status' => true,
 				'icon' => 'error',
 				'title' => 'Kesalahan',
-				'msg' => 'Data anggota sudah ada'
+				'msg' => 'Data koperasi sudah ada'
 			);
 		} else {
 			$this->db->insert('tbl_koperasi', $data);
@@ -172,7 +167,7 @@ class Channeling extends CI_Controller
 				'status' => true,
 				'icon' => 'success',
 				'title' => 'Sukses',
-				'msg' => 'Data anggota berhasil disimpan'
+				'msg' => 'Data koperasi berhasil disimpan'
 			);
 		}
 
@@ -189,10 +184,11 @@ class Channeling extends CI_Controller
 			'rek_pembayaran' => input('rek_pembayaran'),
 			'nocif_kop' => input('no_cif'),
 			'nm_koperasi' => input('nm_koperasi'),
+			'nm_perusahaan' => input('nm_perusahaan'),
 			'tahap_pencairan' => input('thp_cair'),
 			'kd_area' => input('nm_area'),
 			'jns_pembiayaan' => 'Channeling',
-			'tgl_pencairan' => tgl_db(input('tgl_cair')),
+			// 'tgl_pencairan' => tgl_db(input('tgl_cair')),
 			'updateDate' => date('Y-m-d H:i:s')
 		);
 
@@ -202,7 +198,7 @@ class Channeling extends CI_Controller
 			'status' => true,
 			'icon' => 'success',
 			'title' => 'Sukses',
-			'msg' => 'Data anggota berhasil disimpan'
+			'msg' => 'Data koperasi berhasil disimpan'
 		);
 		echo json_encode($status);
 		exit;
@@ -214,7 +210,8 @@ class Channeling extends CI_Controller
 
 		$this->db->trans_start();
 		$this->db->delete('tbl_koperasi', ['id' => $id]);
-		$this->db->delete('tbl_anggota_channeling', ['fk_rek_pembayaran' => $cek['rek_pembayaran'], 'tgl_pencairan' => $cek['tgl_pencairan']]);
+		$this->db->delete('tbl_anggota_channeling', ['id_koperasi' => $id, 'batch' => $cek['tahap_pencairan']]);
+		$this->db->delete('tbl_rekon_channeling', ['id_koperasi' => $id, 'batch' => $cek['tahap_pencairan']]);
 		$this->db->trans_complete();
 
 		if ($this->db->trans_status() === false) {
@@ -222,14 +219,14 @@ class Channeling extends CI_Controller
 				'status' => false,
 				'icon' => 'error',
 				'title' => 'Kesalahan',
-				'msg' => 'Data koperasi gagal dihapus'
+				'msg' => 'Data gagal dihapus'
 			);
 		} else {
 			$status = array(
 				'status' => true,
 				'icon' => 'success',
 				'title' => 'Sukses',
-				'msg' => 'Data koperasi berhasil dihapus'
+				'msg' => 'Data berhasil dihapus'
 			);
 		}
 
@@ -292,6 +289,12 @@ class Channeling extends CI_Controller
 			$data['status'] = false;
 		}
 
+		if (input('tgl_ospokok') == '') {
+			$data['inputerror'][] = 'tgl_ospokok';
+			$data['error'][] = 'Tgl outstanding harus diisi';
+			$data['status'] = false;
+		}
+
 		if (input('tenor') == '') {
 			$data['inputerror'][] = 'tenor';
 			$data['error'][] = 'Tenor harus diisi';
@@ -314,11 +317,11 @@ class Channeling extends CI_Controller
 
 		if (input('os_pokok') == '') {
 			$data['inputerror'][] = 'os_pokok';
-			$data['error'][] = 'OS pokok harus diisi';
+			$data['error'][] = 'Outstanding harus diisi';
 			$data['status'] = false;
 		} else if (!preg_match('/^[0-9,.]+$/', str_replace(',', '', input('os_pokok')))) {
 			$data['inputerror'][] = 'os_pokok';
-			$data['error'][] = 'OS pokok tidak valid';
+			$data['error'][] = 'Outstanding tidak valid';
 			$data['status'] = false;
 		}
 
@@ -330,17 +333,15 @@ class Channeling extends CI_Controller
 
 	public function upd_nominal($id)
 	{
-		// $cek_sum = $this->db->select('sum(nom_pencairan) as plafond, sum(os_pokok) as ospokok, sum(tunggakan) as tunggakan')
-		$cek_sum = $this->db->select('sum(nom_pencairan) as plafond, sum(os_pokok) as ospokok')
-			->from('tbl_anggota_channeling')
-			->where(['id_koperasi' => $id])
-			->get()->row_array();
+		$qry = "select tgl_pencairan, sum(nom_pencairan) as plafond, tgl_ospokok, sum(os_pokok) as ospokok from tbl_anggota_channeling where id_koperasi = '" . $id . "' and ficmisDate in (select max(ficmisDate) from tbl_anggota_channeling where id_koperasi = '" . $id . "')";
+		$cek_sum = $this->db->query($qry)->row_array();
 		$this->db->update(
 			'tbl_koperasi',
 			[
+				'tgl_pencairan' => $cek_sum['tgl_pencairan'],
 				'nom_pencairan' => $cek_sum['plafond'],
-				'os_pokok' => $cek_sum['ospokok'],
-				// 'tunggakan' => $cek_sum['tunggakan']
+				'tgl_ospokok' => $cek_sum['tgl_ospokok'],
+				'os_pokok' => $cek_sum['ospokok']
 			],
 			['id' => $id]
 		);
@@ -349,11 +350,7 @@ class Channeling extends CI_Controller
 	public function details($key)
 	{
 		$id = base64_decode($key);
-		// $batch = substr($decrypt, -8);
-		// $no_rek = substr($decrypt, 0, strlen($decrypt) - strlen($batch));
-		// $tgl = substr($batch, 0, 4) . '-' . substr($batch, 4, 2) . '-' . substr($batch, -2);
-
-		$page = 'koperasi/detail_channeling';
+		$page = 'koperasi/channeling/detail';
 
 		$data['title'] = 'Details Koperasi';
 		$data['breadcrumb'] = '<li class="breadcrumb-item"><a href="' . site_url('sales/home') . '">Home</a></li>';
@@ -362,15 +359,16 @@ class Channeling extends CI_Controller
 
 		$this->db->select('a.*, b.nm_area')->from('tbl_koperasi a')->join('tbl_area b', 'a.kd_area = b.kd_area', 'left')->where(['a.id' => $id]);
 		$data['koperasi'] = $this->db->get()->row_array();
-		$data['anggota'] = $this->db->get_where('tbl_anggota_channeling', ['id_koperasi' => $id])->result_array();
 
-		// $qry = $this->db->select('sum(nom_pencairan) as plafond, sum(os_pokok) as ospokok, sum(tunggakan) as tunggakan')->from('tbl_anggota_channeling')->where(['id_koperasi' => $id])->get()->row_array();
-		$qry = $this->db->select('sum(nom_pencairan) as plafond, sum(os_pokok) as ospokok')->from('tbl_anggota_channeling')->where(['id_koperasi' => $id])->get()->row_array();
-		$data['plafond'] = $qry['plafond'];
-		$data['ospokok'] = $qry['ospokok'];
-		// $data['tunggakan'] = $qry['tunggakan'];
+		$sql = "select * from tbl_anggota_channeling where id_koperasi = '" . $id . "' and ficmisDate in (select max(ficmisDate) from tbl_anggota_channeling where id_koperasi = '" . $id . "')";
+		$data['anggota'] = $this->db->query($sql)->result_array();
 
-		// var_dump($data); die;
+		$qry = "select tgl_pencairan, sum(nom_pencairan) as plafond, tgl_ospokok, sum(os_pokok) as ospokok from tbl_anggota_channeling where id_koperasi = '" . $id . "' and ficmisDate in (select max(ficmisDate) from tbl_anggota_channeling where id_koperasi = '" . $id . "')";
+		$cek_sum = $this->db->query($qry)->row_array();
+		$data['plafond'] = $cek_sum['plafond'];
+		$data['ospokok'] = $cek_sum['ospokok'];
+
+		$this->upd_nominal($id);
 
 		$this->load->view($page, $data);
 	}
@@ -388,19 +386,24 @@ class Channeling extends CI_Controller
 		$this->_validasi_anggota();
 
 		$data = array(
-			'fk_noloan_kop' => base64_decode(input('noloan_kop')),
+			'id_koperasi' => input('id_koperasi'),
+			'fk_rek_pembayaran' => input('rek_pembayaran'),
 			'noloan_anggota' => input('noloan'),
 			'nocif_anggota' => input('no_cif'),
 			'nm_anggota' => input('nm_anggota'),
 			'tenor' => input('tenor'),
+			'batch' => input('batch'),
 			'tgl_pencairan' => tgl_db(input('tgl_cair')),
+			'tgl_ospokok' => tgl_db(input('tgl_ospokok')),
 			'nom_pencairan' => str_replace(',', '', input('nom_plafond')),
 			'os_pokok' => str_replace(',', '', input('os_pokok')),
-			// 'tunggakan' => str_replace(',', '', input('tunggakan')),
+			'ficmisdate' => tgl_db(input('tgl_ospokok')),
 			'createDate' => date('Y-m-d H:i:s')
 		);
 
-		$cek = $this->db->get_where('tbl_anggota', ['noloan_anggota' => input('noloan')]);
+		$cek = $this->db->get_where('tbl_anggota_channeling', ['noloan_anggota' => input('noloan')]);
+		$cek_kop = $this->db->get_where('tbl_koperasi', ['id' => $data['id_koperasi']])->row_array();
+
 		if ($cek->num_rows() > 0) {
 			$status = array(
 				'status' => true,
@@ -409,7 +412,10 @@ class Channeling extends CI_Controller
 				'msg' => 'Data anggota sudah ada'
 			);
 		} else {
-			$this->db->insert('tbl_anggota', $data);
+			$this->db->insert('tbl_anggota_channeling', $data);
+			if ($cek_kop['tgl_ospokok'] == null) {
+				$this->db->update('tbl_koperasi', ['tgl_ospokok' => $data['tgl_ospokok']], ['id' => $data['id_koperasi']]);
+			}
 
 			$status = array(
 				'status' => true,
@@ -433,9 +439,9 @@ class Channeling extends CI_Controller
 			'nm_anggota' => input('nm_anggota'),
 			'tenor' => input('tenor'),
 			'tgl_pencairan' => tgl_db(input('tgl_cair')),
+			'tgl_ospokok' => tgl_db(input('tgl_ospokok')),
 			'nom_pencairan' => str_replace(',', '', input('nom_plafond')),
 			'os_pokok' => str_replace(',', '', input('os_pokok')),
-			// 'tunggakan' => str_replace(',', '', input('tunggakan')),
 			'updateDate' => date('Y-m-d H:i:s')
 		);
 
@@ -482,131 +488,6 @@ class Channeling extends CI_Controller
 
 
 
-	// template Excel
-	// public function template()
-	// {
-	// 	$spreadsheet = new Spreadsheet();
-	// 	$sheet = $spreadsheet->getActiveSheet();
-
-	// 	$sheet->setCellValue('A1', 'REK_PEMBAYARAN');
-	// 	$sheet->setCellValue('B1', 'NOMORCIF');
-	// 	$sheet->setCellValue('C1', 'NAMA_KOPERASI');
-	// 	$sheet->setCellValue('D1', 'KD_CABANG');
-	// 	$sheet->setCellValue('E1', 'TAHAP_CAIR');
-
-	// 	$writer = new Xlsx($spreadsheet);
-
-	// 	$filename = 'template-channeling'; // set filename for excel file to be exported
-
-	// 	header('Content-Type: application/vnd.ms-excel'); // generate excel file
-	// 	header('Content-Disposition: attachment;filename="' . $filename . '.xlsx"');
-	// 	header('Cache-Control: max-age=0');
-
-	// 	$writer->save('php://output');	// download file 
-	// }
-
-	// public function temp_enduser()
-	// {
-	// 	$spreadsheet = new Spreadsheet();
-	// 	$sheet = $spreadsheet->getActiveSheet();
-
-	// 	$sheet->setCellValue('A1', 'FICMISDATE');
-	// 	$sheet->setCellValue('B1', 'NOLOAN');
-	// 	$sheet->setCellValue('C1', 'NOMORCIF');
-	// 	$sheet->setCellValue('D1', 'NAMA_ANGGOTA');
-	// 	$sheet->setCellValue('E1', 'TGL_PENCAIRAN');
-	// 	$sheet->setCellValue('F1', 'TGL_OSPOKOK');
-	// 	$sheet->setCellValue('G1', 'TENOR');
-	// 	$sheet->setCellValue('H1', 'NOM_PENCAIRAN');
-	// 	$sheet->setCellValue('I1', 'OSPOKOK');
-	// 	$sheet->setCellValue('J1', 'TUNGGAKAN');
-
-	// 	$writer = new Xlsx($spreadsheet);
-
-	// 	$filename = 'temp-enduser-channeling'; // set filename for excel file to be exported
-
-	// 	header('Content-Type: application/vnd.ms-excel'); // generate excel file
-	// 	header('Content-Disposition: attachment;filename="' . $filename . '.xlsx"');
-	// 	header('Cache-Control: max-age=0');
-
-	// 	$writer->save('php://output');	// download file 
-	// }
-
-	// // Export excel
-	// public function export($key)
-	// {
-	// 	$kop = $this->db->get_where('tbl_koperasi', ['noloan_kop' => base64_decode($key)])->row_array();
-	// 	$area = $this->db->get_where('tbl_area', ['kd_area' => $kop['kd_area']])->row_array();
-	// 	$cek = $this->db->get_where('tbl_anggota', ['fk_noloan_kop' => base64_decode($key)]);
-	// 	$data = $cek->result_array();
-
-	// 	if ($cek->num_rows() > 0) {
-	// 		$column = 10;
-	// 		$spreadsheet = new Spreadsheet();
-
-	// 		$spreadsheet->setActiveSheetIndex(0)
-	// 			->setCellValue('A3', 'Nomor Kontrak')
-	// 			->setCellValue('A4', 'Tahap Pencairan')
-	// 			->setCellValue('A5', 'Jenis Pembiayaan')
-	// 			->setCellValue('A6', 'Nominal Pencairan')
-	// 			->setCellValue('D3', 'Nama Koperasi')
-	// 			->setCellValue('D4', 'Nama Area')
-	// 			->setCellValue('D5', 'Tujuan Pembiayaan')
-	// 			->setCellValue('D6', 'Outstanding Pokok');
-
-	// 		$spreadsheet->setActiveSheetIndex(0)
-	// 			->setCellValue('B3', $kop['noloan_kop'])
-	// 			->setCellValue('B4', 'Tahap ' . $kop['tahap_pencairan'])
-	// 			->setCellValue('B5', $kop['jns_pembiayaan'])
-	// 			->setCellValue('B6', 'Rp ' . number_format($kop['nom_pencairan'], 2, '.', ','))
-	// 			->setCellValue('E3', $kop['nocif_kop'] . ' - ' . $kop['nm_koperasi'])
-	// 			->setCellValue('E4', $area['nm_area'])
-	// 			->setCellValue('E5', $kop['tujuan_pembiayaan'])
-	// 			->setCellValue('E6', 'Rp ' . number_format($kop['os_pokok'], 2, '.', ','));
-
-	// 		$spreadsheet->setActiveSheetIndex(0)
-	// 			->setCellValue('A' . ($column - 1), 'NOLOAN')
-	// 			->setCellValue('B' . ($column - 1), 'NOMORCIF')
-	// 			->setCellValue('C' . ($column - 1), 'NAMA_ANGGOTA')
-	// 			->setCellValue('D' . ($column - 1), 'TGL_PENCAIRAN')
-	// 			->setCellValue('E' . ($column - 1), 'TGL_OSPOKOK')
-	// 			->setCellValue('F' . ($column - 1), 'TENOR')
-	// 			->setCellValue('G' . ($column - 1), 'NOM_PENCAIRAN')
-	// 			->setCellValue('H' . ($column - 1), 'OSPOKOK');
-
-	// 		foreach ($data as $dt) {
-	// 			$tgl_cair = explode('-', $dt['tgl_pencairan']);
-	// 			$tgl_os = explode('-', $dt['tgl_ospokok']);
-
-	// 			$spreadsheet->setActiveSheetIndex(0)
-	// 				->setCellValue('A' . $column, $dt['noloan_anggota'])
-	// 				->setCellValue('B' . $column, $dt['nocif_anggota'])
-	// 				->setCellValue('C' . $column, $dt['nm_anggota'])
-	// 				->setCellValue('D' . $column, $tgl_cair[2] . '/' . $tgl_cair[1] . '/' . $tgl_cair[0])
-	// 				->setCellValue('E' . $column, $tgl_os[2] . '/' . $tgl_os[1] . '/' . $tgl_os[0])
-	// 				->setCellValue('F' . $column, $dt['tenor'])
-	// 				->setCellValue('G' . $column, $dt['nom_pencairan'])
-	// 				->setCellValue('H' . $column, $dt['os_pokok']);
-
-	// 			$column++;
-	// 		}
-
-	// 		// tulis dalam format .xlsx
-	// 		$writer = new Xlsx($spreadsheet);
-	// 		$fileName = 'export-data-' . str_replace(' ', '-', strtolower($kop['nm_koperasi']));
-
-	// 		// Redirect hasil generate xlsx ke web client
-	// 		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-	// 		header('Content-Disposition: attachment;filename=' . $fileName . '.xlsx');
-	// 		header('Cache-Control: max-age=0');
-
-	// 		$writer->save('php://output');
-	// 	} else {
-	// 		$this->session->set_flashdata('export_err', 'Tidak ada data untuk di Export');
-	// 		echo "<script>window.history.back();</script>";
-	// 	}
-	// }
-
 	// template CSV
 	public function template()
 	{
@@ -617,8 +498,8 @@ class Channeling extends CI_Controller
 			'NOMORCIF',
 			'NAMA_KOPERASI',
 			'KD_CABANG',
-			'TGL_CAIR',
-			'TAHAP_CAIR'
+			'TAHAP_CAIR',
+			'NAMA_PERUSAHAAN'
 		);
 
 		$csv_header = '';
@@ -627,7 +508,7 @@ class Channeling extends CI_Controller
 		}
 		$csv_header .= "\n";
 
-		$csv_row = '7081935337|79207999|KOPEDANA|ID0010520|2020-08-30|1|';
+		$csv_row = '7081935337|79207999|KOPEDANA|ID0010520|1|PT CAHAYA ABADI|';
 		$csv_row .= "\n";
 
 		/* Download as CSV File */
@@ -646,10 +527,10 @@ class Channeling extends CI_Controller
 			'NOLOAN',
 			'NOMORCIF',
 			'NAMA_ANGGOTA',
-			'TGL_PENCAIRAN',
-			'TGL_OSPOKOK',
 			'TENOR',
+			'TGL_PENCAIRAN',
 			'NOM_PENCAIRAN',
+			'TGL_OSPOKOK',
 			'OSPOKOK',
 			// 'TUNGGAKAN'
 		);
@@ -661,7 +542,7 @@ class Channeling extends CI_Controller
 		$csv_header .= "\n";
 
 		// $csv_row = '2020-10-31|LD1635789799|79207999|KOPEDANA|2020-08-12|2020-10-31|35|30000000|1570222.83|0|';
-		$csv_row = '2020-10-31|LD1635789799|79207999|KOPEDANA|2020-08-12|2020-10-31|35|30000000|1570222.83|';
+		$csv_row = '2020-10-31|LD1635789799|79207999|KOPEDANA|35|2018-09-30|30000000.00|2020-10-31|1570222.83|';
 		$csv_row .= "\n";
 
 		/* Download as CSV File */
@@ -686,29 +567,37 @@ class Channeling extends CI_Controller
 			}
 
 			$spreadsheet = $reader->load($_FILES['upd_file']['tmp_name']);
-
 			$sheetData = $spreadsheet->getActiveSheet()->toArray();
 
+			$result = array();
 			$data = array();
 
 			for ($i = 1; $i < count($sheetData); $i++) {
 				$data['fk_kode_ao'] = $kode_ao;
 				$data['jns_pembiayaan'] = 'Channeling';
 
+				$msg = 'Terjadi kesalahan, ';
+
 				if ($sheetData[$i][0] == '' || strlen($sheetData[$i][0]) != 10) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][0] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
 					$data['rek_pembayaran'] = $sheetData[$i][0];
 				}
 
 				if ($sheetData[$i][1] == '' || strlen($sheetData[$i][1]) != 8) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][1] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
 					$data['nocif_kop'] = $sheetData[$i][1];
 				}
 
 				if ($sheetData[$i][2] == '' || !preg_match('/^[a-zA-Z ]+$/', $sheetData[$i][2])) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][2] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
 					$data['nm_koperasi'] = $sheetData[$i][2];
 				}
@@ -716,33 +605,55 @@ class Channeling extends CI_Controller
 				$area = $this->db->get_where('tbl_cabang', ['kd_cabang' => $sheetData[$i][3]])->row_array();
 				if ($sheetData[$i][3] == '' || substr(strtoupper($sheetData[$i][3]), 0, 2) != 'ID') {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][3] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
 					if (strlen($sheetData[$i][3]) != 9 || $area['fk_kd_area'] == null) {
 						$status = false;
+						$msg .= 'format pada kolom ' . $sheetData[0][3] . ' baris ' . $i . ' tidak sesuai';
+						break;
 					} else {
 						$data['kd_area'] = $area['fk_kd_area'];
 					}
 				}
 
-				if ($sheetData[$i][4] == '' || !preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $sheetData[$i][4])) {
+				if ($sheetData[$i][4] == '' || !is_numeric($sheetData[$i][4])) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][4] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
-					$data['tgl_pencairan'] = $sheetData[$i][4];
+					$data['tahap_pencairan'] = $sheetData[$i][4];
 				}
 
-				if ($sheetData[$i][5] == '' || !is_numeric($sheetData[$i][5])) {
+				if ($sheetData[$i][5] == '' || !preg_match('/^[a-zA-Z ]+$/', $sheetData[$i][5])) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][5] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
-					$data['tahap_pencairan'] = $sheetData[$i][5];
+					$data['nm_perusahaan'] = $sheetData[$i][5];
 				}
 
-				if ($status === false) {
-					$msg = 'Terjadi kesalahan saat proses upload, periksa kembali data file upload Anda!';
-				} else {
-					$this->db->insert('tbl_koperasi', $data);
+				$data['status'] = 'Belum Terekonsialisasi';
 
-					$msg = 'Anda telah berhasil mengimport ' . $i . ' daftar koperasi!';
+				$result[] = $data;
+			}
+
+			if ($status === FALSE) {
+				foreach ($result as $val) {
+					$where = array(
+						'nocif_kop' => $val['nocif_kop'],
+						'rek_pembayaran' => $val['rek_pembayaran'],
+						'tahap_pencairan' => $val['tahap_pencairan']
+					);
+					$cek = $this->db->get_where('tbl_koperasi', $where)->num_rows();
+					if ($cek == 0) {
+						$this->db->delete('tbl_koperasi', $where);
+					}
 				}
+			} else {
+				$this->db->insert_batch('tbl_koperasi', $result);
+
+				$msg = 'Anda telah berhasil mengimport ' . ($i - 1) . ' daftar koperasi!';
 			}
 		} else {
 			$status = false;
@@ -751,14 +662,12 @@ class Channeling extends CI_Controller
 
 		echo json_encode(['status' => $status, 'msg' => $msg]);
 		exit;
-		// redirect(site_url('sales/koperasi-channeling'));
 	}
 
 	public function import_enduser()
 	{
 		$file_mimes = array('application/octet-stream', 'application/vnd.ms-excel', 'application/x-csv', 'text/x-csv', 'text/csv', 'application/csv', 'application/excel', 'application/vnd.msexcel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 		$status = true;
-		$noloan_kop = input('noloan_kop');
 
 		if (isset($_FILES['upd_file']['name']) && in_array($_FILES['upd_file']['type'], $file_mimes)) {
 			$arr_file = explode('.', $_FILES['upd_file']['name']);
@@ -772,91 +681,167 @@ class Channeling extends CI_Controller
 
 			$sheetData = $spreadsheet->getActiveSheet()->toArray();
 
+			$result = array();
 			$data = array();
-			$data['fk_rek_pembayaran'] = $noloan_kop;
+			$data['fk_rek_pembayaran'] = input('rek_pembayaran');
 			$data['id_koperasi'] = input('id');
+			$data['batch'] = input('batch');
+
+			$cek_kop = $this->db->get_where('tbl_anggota_channeling', ['id_koperasi' => input('id'), 'batch' => input('batch')])->num_rows();
 
 			for ($i = 1; $i < count($sheetData); $i++) {
-				if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $sheetData[$i][0])) {
+				$msg = 'Terjadi kesalahan, ';
+
+				if (validateDate($sheetData[$i][0]) === false) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][0] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
-					$data['ficmisDate'] = $sheetData[$i][0];
+					if ($i > 1 && $sheetData[$i][0] != $sheetData[($i - 1)][0]) {
+						$status = false;
+						$msg .= 'value pada kolom ' . $sheetData[0][0] . ' baris ' . $i . ' tidak sesuai dengan sebelumnya';
+						break;
+					} else {
+						if (strtotime(input('tgl_os')) < strtotime($sheetData[$i][0])) {
+							$data['ficmisDate'] = $sheetData[$i][0];
+						} else {
+							$status = false;
+							$msg .= 'value pada kolom ' . $sheetData[0][0] . ' harus lebih besar dari tanggal ' . input('tgl_os');
+							break;
+						}
+					}
 				}
 
 				if (strlen($sheetData[$i][1]) != 12 || substr(strtoupper($sheetData[$i][1]), 0, 2) != 'LD') {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][1] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
-					$data['noloan_anggota'] = $sheetData[$i][1];
+					$cek_loan = $this->db->get_where('tbl_anggota_channeling', ['id_koperasi' => input('id'), 'batch' => input('batch'), 'noloan_anggota' => $sheetData[$i][1]])->num_rows();
+					if ($cek_loan > 0 || $cek_kop == 0) {
+						$data['noloan_anggota'] = $sheetData[$i][1];
+					} else {
+						$status = false;
+						$msg .= 'value ' . $sheetData[$i][1] . ' pada kolom ' . $sheetData[0][1] . ' tidak sesuai dengan data anggota';
+						break;
+					}
 				}
 
 				if (strlen($sheetData[$i][2]) != 8) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][2] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
-					$data['nocif_anggota'] = $sheetData[$i][2];
+					$cek_cif = $this->db->get_where('tbl_anggota_channeling', ['id_koperasi' => input('id'), 'batch' => input('batch'), 'nocif_anggota' => $sheetData[$i][2]])->num_rows();
+					if ($cek_cif > 0 || $cek_kop == 0) {
+						$data['nocif_anggota'] = $sheetData[$i][2];
+					} else {
+						$status = false;
+						$msg .= 'value ' . $sheetData[$i][2] . ' pada kolom ' . $sheetData[0][2] . ' tidak sesuai dengan data anggota';
+						break;
+					}
 				}
 
 				if (!preg_match('/^[a-zA-Z ]+$/', $sheetData[$i][3])) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][3] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
 					$data['nm_anggota'] = $sheetData[$i][3];
 				}
 
-				if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $sheetData[$i][4])) {
+				if (!is_numeric($sheetData[$i][4])) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][4] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
-					$data['tgl_pencairan'] = $sheetData[$i][4];
+					$cek_tenor = $this->db->get_where('tbl_anggota_channeling', ['id_koperasi' => input('id'), 'batch' => input('batch'), 'tenor' => $sheetData[$i][4]])->num_rows();
+					if ($cek_tenor > 0 || $cek_kop == 0) {
+						$data['tenor'] = $sheetData[$i][4];
+					} else {
+						$status = false;
+						$msg .= 'value ' . $sheetData[$i][4] . ' pada kolom ' . $sheetData[0][4] . ' tidak sesuai dengan data anggota';
+						break;
+					}
 				}
 
-				if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $sheetData[$i][5])) {
+				if (validateDate($sheetData[$i][5]) === false) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][5] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
-					$data['tgl_ospokok'] = $sheetData[$i][5];
+					if ($i > 1 && $sheetData[$i][5] != $sheetData[($i - 1)][5]) {
+						$status = false;
+						$msg .= 'value pada kolom ' . $sheetData[0][5] . ' baris ' . $i . ' tidak sesuai dengan sebelumnya';
+						break;
+					} else {
+						if (input('tgl_cair') == '' || input('tgl_cair') == $sheetData[$i][5]) {
+							$data['tgl_pencairan'] = $sheetData[$i][5];
+						} else {
+							$status = false;
+							$msg .= 'value pada kolom ' . $sheetData[0][5] . ' tidak sesuai dengan data anggota';
+							break;
+						}
+					}
 				}
 
-				if (!is_numeric($sheetData[$i][6])) {
+				if (!is_float($sheetData[$i][6])) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][6] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
-					$data['tenor'] = $sheetData[$i][6];
+					$data['nom_Pencairan'] = $sheetData[$i][6];
 				}
 
-				if (!is_float($sheetData[$i][7])) {
+				if (validateDate($sheetData[$i][7]) === false) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][7] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
-					$data['nom_Pencairan'] = $sheetData[$i][7];
+					$data['tgl_ospokok'] = $sheetData[$i][7];
 				}
 
 				if (!is_float($sheetData[$i][8])) {
 					$status = false;
+					$msg .= 'format pada kolom ' . $sheetData[0][8] . ' baris ' . $i . ' tidak sesuai';
+					break;
 				} else {
 					$data['os_pokok'] = $sheetData[$i][8];
 				}
 
-				// if (!is_float($sheetData[$i][9])) {
-				// 	$status = false;
-				// } else {
-				// 	$data['tunggakan'] = $sheetData[$i][9];
-				// }
-
-				if ($status === false) {
-					$msg = 'Terjadi kesalahan saat proses upload, periksa kembali data file upload Anda!';
-
-					$this->db->delete('tbl_anggota_channeling', ['id_koperasi' => input('id')]);
-				} else {
-					$this->db->insert('tbl_anggota_channeling', $data);
-					$this->db->update(
-						'tbl_koperasi',
-						[
-							'tgl_pencairan' => $data['tgl_pencairan'],
-							'tgl_ospokok' => $data['tgl_ospokok']
-						],
-						['id' => input('id')]
-					);
-
-					$msg = 'Anda telah berhasil mengimport ' . $i . ' daftar anggota koperasi!';
-				}
-
+				$result[] = $data;
 				// var_dump($data);
 			}
+			// var_dump($result);
+			// die;
+
+			if ($status === FALSE) {
+				$cek = $this->db->get_where('tbl_anggota_channeling', ['id_koperasi' => input('id')])->num_rows();
+				if ($cek == 0) {
+					$this->db->delete('tbl_anggota_channeling', ['id_koperasi' => input('id')]);
+				}
+			} else {
+				$this->db->trans_start();
+				$this->db->insert_batch('tbl_anggota_channeling', $result);
+				$this->db->update(
+					'tbl_koperasi',
+					[
+						'tgl_pencairan' => $result[0]['tgl_pencairan'],
+						'tgl_ospokok' => $result[0]['tgl_ospokok']
+					],
+					['id' => input('id')]
+				);
+				$this->db->trans_complete();
+
+				if ($this->db->trans_status() === FALSE) {
+					$this->db->trans_rollback();
+					$msg = 'Data gagal di upload';
+				} else {
+					$this->db->trans_commit();
+					$msg = 'Anda telah berhasil mengimport ' . ($i - 1) . ' daftar anggota koperasi!';
+				}
+			}
+
 			// die;
 		} else {
 			$status = false;
@@ -865,19 +850,18 @@ class Channeling extends CI_Controller
 
 		echo json_encode(['status' => $status, 'msg' => $msg]);
 		exit;
-		// redirect(site_url('sales/koperasi/channeling/details/' . base64_encode($noloan_kop)));
 	}
 
 	// Export CSV
 	public function export($key)
 	{
-		$decode = base64_decode($key);
-		$tgl = substr($decode, -8);
-		$rek = substr($decode, 0, strlen($decode) - strlen($tgl));
-		$tgl = substr($tgl, 0, 4) . '-' . substr($tgl, 4, 2) . '-' . substr($tgl, -2);
+		// $decode = base64_decode($key);
+		// $tgl = substr($decode, -8);
+		// $rek = substr($decode, 0, strlen($decode) - strlen($tgl));
+		// $tgl = substr($tgl, 0, 4) . '-' . substr($tgl, 4, 2) . '-' . substr($tgl, -2);
 
-		$kop = $this->db->get_where('tbl_koperasi', ['rek_pembayaran' => $rek, 'tgl_pencairan' => $tgl])->row_array();
-		$area = $this->db->get_where('tbl_area', ['kd_area' => $kop['kd_area']])->row_array();
+		$kop = $this->db->get_where('tbl_koperasi', ['id' => base64_decode($key)])->row_array();
+		// $area = $this->db->get_where('tbl_area', ['kd_area' => $kop['kd_area']])->row_array();
 		$cek = $this->db->get_where('tbl_anggota_channeling', ['id_koperasi' => $kop['id']]);
 		$data = $cek->result_array();
 
@@ -982,13 +966,15 @@ class Channeling extends CI_Controller
 
 			$sheetData = $spreadsheet->getActiveSheet()->toArray();
 
+			$result = array();
 			$data = array();
 			$data['kode_ao'] = input('kode_ao');
 			$data['id_koperasi'] = input('id_koperasi');
 
-			$cek = $this->db->get_where('tbl_anggota_channeling', ['id_koperasi' => input('id_koperasi')])->num_rows();
+			$cek = $this->db->query('select id_koperasi, max(ficmisDate) as ficmisDate, count(distinct(noloan_anggota)) as anggota, tenor, tgl_pencairan, nom_pencairan, tgl_ospokok, os_pokok from tbl_anggota_channeling where id_koperasi = "' . input('id_koperasi') . '" group by id_koperasi')->row_array();
+			$cek_loan = $this->db->get_where('tbl_anggota_channeling', ['id_koperasi' => input('id_koperasi'), 'ficmisDate' => $cek['ficmisDate']])->result_array();
 
-			if ((count($sheetData) - 1) > $cek) {
+			if ((count($sheetData) - 1) > $cek['anggota']) {
 				$status = false;
 				$msg = 'Terjadi kesalahan, jumlah end-user koperasi melebihi end-user bank';
 			} else {
@@ -997,7 +983,7 @@ class Channeling extends CI_Controller
 
 					if ($sheetData[$i][0] != input('rek_pemb')) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][0] . ' baris ' . $i;
+						$msg .= 'value pada kolom ' . $sheetData[0][0] . ' baris ke-' . $i . ' tidak sesuai dengan data anggota';
 						break;
 					} else {
 						$data['rek_pembayaran'] = $sheetData[$i][0];
@@ -1005,15 +991,21 @@ class Channeling extends CI_Controller
 
 					if (strlen($sheetData[$i][1]) != 12 || substr(strtoupper($sheetData[$i][1]), 0, 2) != 'LD') {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][1] . ' baris ' . $i;
+						$msg .= 'format pada kolom ' . $sheetData[0][1] . ' baris ' . $i . ' tidak sesuai';
 						break;
 					} else {
-						$data['noloan'] = $sheetData[$i][1];
+						if ($sheetData[$i][1] != $cek_loan[$i - 1]['noloan_anggota']) {
+							$status = false;
+							$msg .= 'value pada kolom ' . $sheetData[0][1] . ' baris ke-' . $i . ' tidak sesuai dengan data anggota';
+							break;
+						} else {
+							$data['noloan'] = $sheetData[$i][1];
+						}
 					}
 
 					if (!preg_match('/^[a-zA-Z ]+$/', $sheetData[$i][2])) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][2] . ' baris ' . $i;
+						$msg .= 'format pada kolom ' . $sheetData[0][2] . ' baris ' . $i . ' tidak sesuai';
 						break;
 					} else {
 						$data['nm_anggota'] = $sheetData[$i][2];
@@ -1021,39 +1013,58 @@ class Channeling extends CI_Controller
 
 					if (!is_numeric($sheetData[$i][3])) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][3] . ' baris ' . $i;
+						$msg .= 'format pada kolom ' . $sheetData[0][3] . ' baris ' . $i . ' tidak sesuai';
 						break;
 					} else {
-						$data['batch'] = $sheetData[$i][3];
+						if ($sheetData[$i][3] != input('batch')) {
+							$status = false;
+							$msg .= 'value pada kolom ' . $sheetData[0][3] . ' baris ke-' . $i . ' tidak sesuai dengan data anggota';
+							break;
+						} else {
+							$data['batch'] = $sheetData[$i][3];
+						}
 					}
 
 					if (!is_numeric($sheetData[$i][4])) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][4] . ' baris ' . $i;
+						$msg .= 'format pada kolom ' . $sheetData[0][4] . ' baris ' . $i . ' tidak sesuai';
 						break;
 					} else {
-						$data['tenor'] = $sheetData[$i][4];
+						if ($sheetData[$i][4] != $cek_loan[$i - 1]['tenor']) {
+							$status = false;
+							$msg .= 'value pada kolom ' . $sheetData[0][4] . ' baris ke-' . $i . ' tidak sesuai dengan data anggota';
+							break;
+						} else {
+							$data['tenor'] = $sheetData[$i][4];
+						}
 					}
 
-					if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $sheetData[$i][5])) {
+					if (validateDate($sheetData[$i][5]) === false) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][5] . ' baris ' . $i;
+						$msg .= 'format pada kolom ' . $sheetData[0][5] . ' baris ' . $i . ' tidak sesuai';
 						break;
 					} else {
-						$data['tgl_pencairan'] = $sheetData[$i][5];
+						if ($sheetData[$i][5] != $cek['tgl_pencairan']) {
+							$status = false;
+							$msg .= 'value pada kolom ' . $sheetData[0][5] . ' baris ke-' . $i . ' tidak sesuai dengan data anggota';
+							break;
+						} else {
+							$data['tgl_pencairan'] = $sheetData[$i][5];
+						}
 					}
 
 					if (!is_double($sheetData[$i][6])) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][6] . ' baris ' . $i;
+						$msg .= 'format pada kolom ' . $sheetData[0][6] . ' baris ' . $i . ' tidak sesuai';
 						break;
 					} else {
 						$data['plafond'] = $sheetData[$i][6];
 					}
 
-					if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $sheetData[$i][7])) {
+					// if (!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $sheetData[$i][7])) {
+					if (validateDate($sheetData[$i][7]) === false) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][7] . ' baris ' . $i;
+						$msg .= 'format pada kolom ' . $sheetData[0][7] . ' baris ' . $i . ' tidak sesuai';
 						break;
 					} else {
 						$data['tgl_ospokok'] = $sheetData[$i][7];
@@ -1061,23 +1072,40 @@ class Channeling extends CI_Controller
 
 					if (!is_double($sheetData[$i][8])) {
 						$status = false;
-						$msg .= 'kolom ' . $sheetData[0][8] . ' baris ' . $i;
+						$msg .= 'format pada kolom ' . $sheetData[0][8] . ' baris ' . $i . ' tidak sesuai';
 						break;
 					} else {
 						$data['ospokok'] = $sheetData[$i][8];
 					}
 
-					if ($status === false) {
-						// $msg = 'Terjadi kesalahan saat proses upload, periksa kembali data file upload Anda!';
-						$this->db->delete('tbl_rekon_channeling', ['id_koperasi' => input('id_koperasi')]);
-					} else {
-						$this->db->insert('tbl_rekon_channeling', $data);
-						$this->db->update('tbl_koperasi', ['status' => 'Proses Rekonsialisasi'], ['id' => input('id_koperasi')]);
-
-						$msg = 'Data Rekonsialisasi telah berhasil di-upload';
-					}
-
+					$result[] = $data;
 					// var_dump($status);
+				}
+
+				if ($status === FALSE) {
+					$cek = $this->db->get_where('tbl_rekon_channeling', ['id_koperasi' => input('id_koperasi')])->num_rows();
+					if ($cek == 0) {
+						$this->db->delete('tbl_rekon_channeling', ['id_koperasi' => input('id_koperasi')]);
+					}
+				} else {
+					$this->db->trans_start();
+					$this->db->insert_batch('tbl_rekon_channeling', $result);
+					$this->db->update(
+						'tbl_koperasi',
+						[
+							'status' => 'Proses Rekonsialisasi'
+						],
+						['id' => input('id_koperasi')]
+					);
+					$this->db->trans_complete();
+
+					if ($this->db->trans_status() === FALSE) {
+						$this->db->trans_rollback();
+						$msg = 'Data gagal di upload';
+					} else {
+						$this->db->trans_commit();
+						$msg = 'Data Rekonsialisasi telah berhasil di upload!';
+					}
 				}
 			}
 			// die;

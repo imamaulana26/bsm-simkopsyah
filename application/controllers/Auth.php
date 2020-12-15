@@ -47,7 +47,7 @@ class Auth extends CI_Controller
 
 		if ($auth->num_rows() > 0) {
 			if ($cek['password'] == $password) {
-				if ($cek['IsDelete'] == 0) {
+				if ($cek['IsDelete'] == 0 && $cek['status'] == 0) {
 					if ($cek['is_active'] == 0) { // user tidak sedang login
 						if ($remember) {
 							$key = random_string('alnum', 64);

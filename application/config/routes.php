@@ -65,6 +65,7 @@ $route['sales/koperasi-channeling/update'] = 'sales/koperasi/channeling/update';
 $route['sales/koperasi-channeling/delete/(:any)'] = 'sales/koperasi/channeling/delete/$1';
 $route['sales/koperasi-channeling/find/(:any)'] = 'sales/koperasi/channeling/find/$1';
 $route['sales/koperasi-channeling/(:any)'] = 'sales/koperasi/channeling/get_koperasi/$1';
+$route['sales/koperasi-channeling/rekap/(:any)'] = 'sales/koperasi/rekonsel/rekap/$1';
 
 // route anggota koperasi channeling
 $route['sales/koperasi-channeling/template/end-user'] = 'sales/koperasi/channeling/temp_enduser';
