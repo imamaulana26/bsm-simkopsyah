@@ -128,7 +128,7 @@ class Channeling extends CI_Controller
 			->where(['a.id' => $key])->get()->row_array();
 
 		$qry = "select id_koperasi, max(ficmisDate) as ficmisDate, count(distinct(noloan_anggota)) as anggota, nom_pencairan, os_pokok from tbl_anggota_channeling where id_koperasi = " . $data['koperasi']['id'] . " group by id_koperasi";
-		$data['anggota'] = $this->db->query($qry)->result_array();
+		$data['anggota'] = $this->db->query($qry)->row_array();
 
 		echo json_encode($data);
 		exit;
@@ -335,16 +335,20 @@ class Channeling extends CI_Controller
 	{
 		$qry = "select tgl_pencairan, sum(nom_pencairan) as plafond, tgl_ospokok, sum(os_pokok) as ospokok from tbl_anggota_channeling where id_koperasi = '" . $id . "' and ficmisDate in (select max(ficmisDate) from tbl_anggota_channeling where id_koperasi = '" . $id . "')";
 		$cek_sum = $this->db->query($qry)->row_array();
-		$this->db->update(
-			'tbl_koperasi',
-			[
-				'tgl_pencairan' => $cek_sum['tgl_pencairan'],
-				'nom_pencairan' => $cek_sum['plafond'],
-				'tgl_ospokok' => $cek_sum['tgl_ospokok'],
-				'os_pokok' => $cek_sum['ospokok']
-			],
-			['id' => $id]
+		$cek_kop = $this->db->get_where('tbl_koperasi', ['id' => $id])->row_array();
+
+		$data = array(
+			'tgl_pencairan' => $cek_sum['tgl_pencairan'],
+			'nom_pencairan' => $cek_sum['plafond'],
+			'tgl_ospokok' => $cek_sum['tgl_ospokok'],
+			'os_pokok' => $cek_sum['ospokok']
 		);
+
+		if ($cek_kop['status'] == 'Update Outstanding') {
+			$data['status'] = 'Belum Terekonsialisasi';
+		}
+
+		$this->db->update('tbl_koperasi', $data, ['id' => $id]);
 	}
 
 	public function details($key)
@@ -976,7 +980,7 @@ class Channeling extends CI_Controller
 
 			if ((count($sheetData) - 1) > $cek['anggota']) {
 				$status = false;
-				$msg = 'Terjadi kesalahan, jumlah end-user koperasi melebihi end-user bank';
+				$msg = 'Terjadi kesalahan, jumlah data anggota tidak sesuai dengan anggota koperasi';
 			} else {
 				for ($i = 1; $i < count($sheetData); $i++) {
 					$msg = 'Terjadi kesalahan pada ';

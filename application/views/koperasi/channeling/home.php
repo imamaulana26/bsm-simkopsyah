@@ -82,10 +82,27 @@ scratch. This page gets rid of all links and provides the needed markup only.
 														<?php // func untuk rekonsel tiap 3 bulan
 														$timeStart = strtotime(date($val['tgl_rekon']));
 														$timeEnd = strtotime(date('Y-m-d'));
-														$numBulan = 1 + (date('Y', $timeEnd) - date('Y', $timeStart)) * 12;
-														$numBulan += (date('m', $timeEnd) - date('m', $timeStart)); ?>
+														$numBulan = (date('Y', $timeEnd) - date('Y', $timeStart)) * 12;
+														$numBulan += (date('m', $timeEnd) - date('m', $timeStart));
+														// $numBulan = (date('m', $timeEnd) - date('m', $timeStart));
 
-														<?php if ($val['status'] == 'Belum Terekonsialisasi' && $numBulan % 2 == 0) : ?>
+														$timeStart = strtotime(date($val['tgl_ospokok']));
+														$timeEnd = strtotime(date('Y-m-d'));
+														$cek_os = (date('Y', $timeEnd) - date('Y', $timeStart)) * 12;
+														$cek_os += (date('m', $timeEnd) - date('m', $timeStart));
+														// $cek_os = (date('m', $timeEnd) - date('m', $timeStart));
+
+														if ($cek_os >= 3 && $val['os_pokok'] != null && $val['status'] != 'Proses Rekonsialisasi') {
+															$this->db->update('tbl_koperasi', ['status' => 'Update Outstanding'], ['id' => $val['id']]);
+														}
+														if ($val['status'] == 'Terekonsialisasi' && $numBulan >= 3) {
+															$this->db->update('tbl_koperasi', ['status' => 'Belum Terekonsialisasi'], ['id' => $val['id']]);
+														}
+														?>
+
+														<?php if ($val['status'] == 'Update Outstanding') : ?>
+															<small class="text-danger"><?= $val['status']; ?></small>
+														<?php elseif ($val['status'] == 'Belum Terekonsialisasi') : ?>
 															<small class="text-warning"><?= $val['status']; ?></small><br>
 															<?php if ($val['anggota'] > 0) : ?>
 																<span class="btn btn-sm btn-link" onclick="btn_rekon('<?= $val['id'] ?>')">Upload Rekonsialisasi</span>
@@ -664,7 +681,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					html += `<div class="row">
 									<label class="col-md-2">Jumlah Anggota</label>
 									<div class="col-md-4">
-										` + res.anggota.length + ` Anggota</span>
+										` + res.anggota.anggota + ` Anggota</span>
 									</div>`;
 					if (res.koperasi.rekon > 0) {
 						html += `<label class="col-md-2">Rekap Rekonsialisasi</label>

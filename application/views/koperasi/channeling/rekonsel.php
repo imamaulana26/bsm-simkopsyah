@@ -239,6 +239,19 @@ scratch. This page gets rid of all links and provides the needed markup only.
 												echo '</tr>';
 											} ?>
 										</tbody>
+										<!-- <tfoot>
+											<tr>
+												<th>#</th>
+												<th>Nomor Loan</th>
+												<th>Nama Anggota</th>
+												<th>Sisa Tenor</th>
+												<th><?= number_format($plafond_bank, 2, '.', ',') ?></th>
+												<th><?= number_format($os_bank, 2, '.', ','); ?></th>
+												<th>Sisa Tenor</th>
+												<th><?= number_format($plafond_kop, 2, '.', ',') ?></th>
+												<th><?= number_format($os_kop, 2, '.', ','); ?></th>
+											</tr>
+										</tfoot> -->
 									</table>
 								</div>
 							</div>
@@ -272,12 +285,16 @@ scratch. This page gets rid of all links and provides the needed markup only.
 				$('#display').append('<li>Terdapat ' + <?= $plafond_minus + $plafond_plus ?> + ' nasabah dengan plafond di koperasi tidak sesuai dengan plafond bank.</li>');
 			}
 
-			if (<?= $os_minus ?> != 0) {
-				$('#display').append('<li>Terdapat ' + <?= $os_minus ?> + ' nasabah dengan outstanding di koperasi lebih kecil dari outstanding bank.</li>');
+			if (<?= $os_minus + $os_plus ?> != 0) {
+				$('#display').append('<li>Terdapat ' + <?= $os_minus + $os_plus ?> + ' nasabah dengan outstanding di koperasi tidak sesuai dengan outstanding bank.</li>');
 			}
 
 			if (<?= $tenor_minus ?> != 0) {
 				$('#display').append('<li>Terdapat ' + <?= $tenor_minus ?> + ' nasabah dengan sisa tenor di koperasi lebih kecil dari sisa tenor bank.</li>');
+			}
+
+			if (<?= $tenor_plus ?> != 0) {
+				$('#display').append('<li>Terdapat ' + <?= $tenor_plus ?> + ' nasabah dengan sisa tenor di koperasi lebih besar dari sisa tenor bank.</li>');
 			}
 		});
 	</script>

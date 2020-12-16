@@ -31,8 +31,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							<div class="col-sm-4">
 								<select name="bln_rekon" id="bln_rekon" class="form-control">
 									<option selected disabled>-- Please Select --</option>
-									<?php foreach ($rekon as $val) { ?>
-										<option value="<?= $val['rekon_date'] ?>"><?= tgl_indo($val['rekon_date']) ?></option>
+									<?php foreach ($rekon as $val) {
+										$select = '';
+										if ($_SESSION['tgl_rekon'] == $val['rekon_date']) $select = 'selected'; ?>
+										<option value="<?= $val['rekon_date'] ?>" <?= $select; ?>><?= tgl_indo($val['rekon_date']) ?></option>
 									<?php } ?>
 								</select>
 							</div>
@@ -287,12 +289,16 @@ scratch. This page gets rid of all links and provides the needed markup only.
 				$('#display').append('<li>Terdapat ' + <?= $plafond_minus + $plafond_plus ?> + ' nasabah dengan plafond di koperasi tidak sesuai dengan plafond bank.</li>');
 			}
 
-			if (<?= $os_minus ?> != 0) {
-				$('#display').append('<li>Terdapat ' + <?= $os_minus ?> + ' nasabah dengan outstanding di koperasi lebih kecil dari outstanding bank.</li>');
+			if (<?= $os_minus + $os_plus ?> != 0) {
+				$('#display').append('<li>Terdapat ' + <?= $os_minus + $os_plus ?> + ' nasabah dengan outstanding di koperasi tidak sesuai dengan outstanding bank.</li>');
 			}
 
 			if (<?= $tenor_minus ?> != 0) {
 				$('#display').append('<li>Terdapat ' + <?= $tenor_minus ?> + ' nasabah dengan sisa tenor di koperasi lebih kecil dari sisa tenor bank.</li>');
+			}
+
+			if (<?= $tenor_plus ?> != 0) {
+				$('#display').append('<li>Terdapat ' + <?= $tenor_plus ?> + ' nasabah dengan sisa tenor di koperasi lebih besar dari sisa tenor bank.</li>');
 			}
 		});
 	</script>
