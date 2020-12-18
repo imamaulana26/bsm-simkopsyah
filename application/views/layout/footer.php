@@ -30,15 +30,15 @@
 		$('.invalid-feedback').css('width', 'max-content');
 	});
 
-	// function reload_table() {
-	// 	$('#tbl_example').DataTable({
-	// 		ordering: false,
-	// 		rowReorder: {
-	// 			selector: 'td:nth-child(2)'
-	// 		},
-	// 		responsive: true
-	// 	});
-	// }
+	function reload_table() {
+		$('#tbl_example').DataTable({
+			ordering: false,
+			rowReorder: {
+				selector: 'td:nth-child(2)'
+			},
+			responsive: true
+		});
+	}
 
 	// # check number
 	function CheckNumeric() {
