@@ -1235,12 +1235,12 @@ CREATE TABLE `tbl_koperasi` (
 --
 
 INSERT INTO `tbl_koperasi` (`id`, `fk_kode_ao`, `noloan_kop`, `nocif_kop`, `rek_pembayaran`, `nm_koperasi`, `nm_perusahaan`, `kd_area`, `jns_pembiayaan`, `tahap_pencairan`, `tgl_pencairan`, `nom_pencairan`, `os_pokok`, `tgl_ospokok`, `tgl_rekon`, `status`, `createDate`, `updateDate`, `isDelete`) VALUES
-(1, '91002593', NULL, '79207999', '7081935337', 'KOPEDANA', '', 'ID0010002a', 'Channeling', 1, NULL, '4319467128.00', '1427756879.00', '2020-11-12', NULL, 'Proses Rekonsialisasi', '2020-11-19 10:34:49', '2020-11-19 16:30:18', 0),
-(2, '91002593', NULL, '73774120', '7036647487', 'KOPERASI BAYTUL IKHTIAR', '', 'ID0010017a', 'Channeling', 1, NULL, '4362661799.28', '1341034447.79', '2020-11-12', '2020-12-02', 'Terekonsialisasi', '2020-11-19 10:34:50', NULL, 0),
-(3, '91002593', NULL, '74213561', '7090065755', 'KOPERASI ARTHA GUNA', '', 'ID0010051a', 'Channeling', 1, NULL, '4362661799.28', '1442034447.79', '2020-11-12', NULL, 'Belum Terekonsialisasi', '2020-11-19 10:34:50', NULL, 0),
-(4, '91002593', NULL, '78433150', '7071961747', 'KOPERASI ABDI BAHARI', '', 'ID0010017a', 'Channeling', 1, NULL, NULL, NULL, NULL, NULL, 'Belum Terekonsialisasi', '2020-11-19 10:34:50', NULL, 0),
-(5, '91002593', NULL, '78471560', '7071699298', 'KOPERASI ABDI BAHARI', '', 'ID0010017a', 'Channeling', 2, NULL, NULL, NULL, NULL, NULL, 'Belum Terekonsialisasi', '2020-11-19 10:34:50', NULL, 0),
-(6, '91002593', NULL, '75083025', '7037973321', 'KOPEG PELINDO III', '', 'ID0010106a', 'Channeling', 1, NULL, '197522272204.85', '132979519309.67', '2020-10-31', '2020-12-02', 'Terekonsialisasi', '2020-12-01 08:30:29', NULL, 0);
+(1, '91002593', NULL, '79207999', '7081935337', 'KOPEDANA', '', 'ID0010002a', 'Channeling', 1, NULL, '4319467128.00', '1427756879.00', '2020-11-12', NULL, 'Proses Rekonsiliasi', '2020-11-19 10:34:49', '2020-11-19 16:30:18', 0),
+(2, '91002593', NULL, '73774120', '7036647487', 'KOPERASI BAYTUL IKHTIAR', '', 'ID0010017a', 'Channeling', 1, NULL, '4362661799.28', '1341034447.79', '2020-11-12', '2020-12-02', 'Terekonsiliasi', '2020-11-19 10:34:50', NULL, 0),
+(3, '91002593', NULL, '74213561', '7090065755', 'KOPERASI ARTHA GUNA', '', 'ID0010051a', 'Channeling', 1, NULL, '4362661799.28', '1442034447.79', '2020-11-12', NULL, 'Belum Terekonsiliasi', '2020-11-19 10:34:50', NULL, 0),
+(4, '91002593', NULL, '78433150', '7071961747', 'KOPERASI ABDI BAHARI', '', 'ID0010017a', 'Channeling', 1, NULL, NULL, NULL, NULL, NULL, 'Belum Terekonsiliasi', '2020-11-19 10:34:50', NULL, 0),
+(5, '91002593', NULL, '78471560', '7071699298', 'KOPERASI ABDI BAHARI', '', 'ID0010017a', 'Channeling', 2, NULL, NULL, NULL, NULL, NULL, 'Belum Terekonsiliasi', '2020-11-19 10:34:50', NULL, 0),
+(6, '91002593', NULL, '75083025', '7037973321', 'KOPEG PELINDO III', '', 'ID0010106a', 'Channeling', 1, NULL, '197522272204.85', '132979519309.67', '2020-10-31', '2020-12-02', 'Terekonsiliasi', '2020-12-01 08:30:29', NULL, 0);
 
 -- --------------------------------------------------------
 

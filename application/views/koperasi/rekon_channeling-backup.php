@@ -54,7 +54,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 						</div>
 
 						<div class="col-md">
-							<span class="btn btn-info btn-block" style="margin-top: 115px;" onclick="rekon('<?= $bank['id'] ?>')">Rekonsialisasi</span>
+							<span class="btn btn-info btn-block" style="margin-top: 115px;" onclick="rekon('<?= $bank['id'] ?>')">Rekonsiliasi</span>
 						</div>
 
 						<div class="col-md-5">

@@ -38,8 +38,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
 						<div class="col-md">
 							<div class="card card-primary card-outline">
 								<div class="card-header">
-									<a href="<?= site_url('sales/koperasi/channeling/temp_rekonsel') ?>" class="btn btn-sm btn-link float-right"> Template Rekonsialisasi</a>
-									<!-- <a href="#" class="btn btn-sm btn-link float-right"> Terekonsialisasi (<?= $list_rekon['rekon'] < 0 ? 0 : $list_rekon['rekon']; ?>)</a> -->
+									<a href="<?= site_url('sales/koperasi/channeling/temp_rekonsel') ?>" class="btn btn-sm btn-link float-right"> Template Rekonsiliasi</a>
+									<!-- <a href="#" class="btn btn-sm btn-link float-right"> Terekonsiliasi (<?= $list_rekon['rekon'] < 0 ? 0 : $list_rekon['rekon']; ?>)</a> -->
 								</div>
 								<div class="card-body">
 									<table class="table table-bordered table-hover nowrap" id="tbl_example">
@@ -92,24 +92,24 @@ scratch. This page gets rid of all links and provides the needed markup only.
 														$cek_os += (date('m', $timeEnd) - date('m', $timeStart));
 														// $cek_os = (date('m', $timeEnd) - date('m', $timeStart));
 
-														if ($cek_os >= 3 && $val['os_pokok'] != null && $val['status'] != 'Proses Rekonsialisasi') {
+														if ($cek_os >= 3 && $val['os_pokok'] != null && $val['status'] != 'Proses Rekonsiliasi') {
 															$this->db->update('tbl_koperasi', ['status' => 'Update Outstanding'], ['id' => $val['id']]);
 														}
-														if ($val['status'] == 'Terekonsialisasi' && $numBulan >= 3) {
-															$this->db->update('tbl_koperasi', ['status' => 'Belum Terekonsialisasi'], ['id' => $val['id']]);
+														if ($val['status'] == 'Terekonsiliasi' && $numBulan >= 3) {
+															$this->db->update('tbl_koperasi', ['status' => 'Belum Terekonsiliasi'], ['id' => $val['id']]);
 														}
 														?>
 
 														<?php if ($val['status'] == 'Update Outstanding') : ?>
 															<small class="text-danger"><?= $val['status']; ?></small>
-														<?php elseif ($val['status'] == 'Belum Terekonsialisasi') : ?>
+														<?php elseif ($val['status'] == 'Belum Terekonsiliasi') : ?>
 															<small class="text-warning"><?= $val['status']; ?></small><br>
 															<?php if ($val['anggota'] > 0) : ?>
-																<span class="btn btn-sm btn-link" onclick="btn_rekon('<?= $val['id'] ?>')">Upload Rekonsialisasi</span>
+																<span class="btn btn-sm btn-link" onclick="btn_rekon('<?= $val['id'] ?>')">Upload Rekonsiliasi</span>
 															<?php endif; ?>
-														<?php elseif ($val['status'] == 'Proses Rekonsialisasi') : ?>
+														<?php elseif ($val['status'] == 'Proses Rekonsiliasi') : ?>
 															<a href="<?= site_url('sales/koperasi-channeling/rekonsel/' . base64_encode($val['id'])) ?>" class="btn btn-sm btn-link">
-																<i class="fa fa-fw fa-xs fa-sync"></i> Rekonsialisasi
+																<i class="fa fa-fw fa-xs fa-sync"></i> Rekonsiliasi
 															</a>
 														<?php else : ?>
 															<small class="text-success">
@@ -195,15 +195,15 @@ scratch. This page gets rid of all links and provides the needed markup only.
 		<div class="modal-dialog modal-lg">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h5 class="modal-title" id="rekon_modalLabel">Upload data rekonsialisasi</h5>
+					<h5 class="modal-title" id="rekon_modalLabel">Upload data rekonsiliasi</h5>
 					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 						<span aria-hidden="true">&times;</span>
 					</button>
 				</div>
 				<form id="fm_rekon">
 					<div class="modal-body">
-						<label>Input data template rekonsialisasi</label>
-						<p>Input data koperasi yang akan di rekonsialisasi ke dalam file template yang sudah di download. Pastikan bahwa data koperasi sesuai dengan header kolom yang disediakan dalam template.</p>
+						<label>Input data template rekonsiliasi</label>
+						<p>Input data koperasi yang akan di rekonsiliasi ke dalam file template yang sudah di download. Pastikan bahwa data koperasi sesuai dengan header kolom yang disediakan dalam template.</p>
 
 						<p class="text-danger">PENTING: Dilarang untuk merubah atau menghapus struktur header kolom yang disediakan dalam template upload. Hal ini dilakukan agar proses import bisa berjalan lancar.</p>
 						<p class="text-danger">File yang sudah di upload tidak bisa dihapus, pastikan bahwa file yang akan di upload telah sesuai.</p>
@@ -684,7 +684,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 										` + res.anggota.anggota + ` Anggota</span>
 									</div>`;
 					if (res.koperasi.rekon > 0) {
-						html += `<label class="col-md-2">Rekap Rekonsialisasi</label>
+						html += `<label class="col-md-2">Rekap Rekonsiliasi</label>
 									<div class="col-md-4">
 										` + res.koperasi.rekon + ` Bulan <a href='<?= site_url('sales/koperasi-channeling/rekap/') ?>` + params + `'><i class="fa fa-fw fa-binoculars"></i></a></span>
 									</div>`;

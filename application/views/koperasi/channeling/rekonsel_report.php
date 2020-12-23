@@ -27,10 +27,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					<form action="<?= site_url('sales/koperasi/rekonsel/result') ?>" method="POST">
 						<input type="hidden" name="id_kop" id="id_kop" value="<?= $rekon[0]['id_koperasi'] ?>">
 						<div class="form-group row">
-							<label class="col-sm-2 col-form-label">Tgl Rekonsialisasi</label>
+							<label class="col-sm-2 col-form-label">Tgl Rekonsiliasi</label>
 							<div class="col-sm-4">
 								<select name="bln_rekon" id="bln_rekon" class="form-control">
-									<option selected disabled>-- Please Select --</option>
 									<?php foreach ($rekon as $val) {
 										$select = '';
 										if ($_SESSION['tgl_rekon'] == $val['rekon_date']) $select = 'selected'; ?>
@@ -38,8 +37,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
 									<?php } ?>
 								</select>
 							</div>
-							<div class="col-sm-1">
+							<div class="col-sm">
 								<button type="submit" class="btn btn-default"><i class="fa fa-fw fa-search"></i> Lihat</button>
+								<?php if (isset($bank)) : ?>
+									<a href="<?= site_url('report/cetak/' . base64_encode($rekon[0]['id_koperasi']) . '/' . base64_encode($_SESSION['tgl_rekon'])) ?>" target="_blank" class="btn btn-info float-right"><i class="fa fa-fw fa-print"></i> Cetak</a>
+								<?php endif; ?>
 							</div>
 						</div>
 					</form>

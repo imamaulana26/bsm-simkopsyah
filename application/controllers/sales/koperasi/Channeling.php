@@ -147,7 +147,7 @@ class Channeling extends CI_Controller
 			'tahap_pencairan' => input('thp_cair'),
 			'kd_area' => input('nm_area'),
 			'jns_pembiayaan' => 'Channeling',
-			'status' => 'Belum Terekonsialisasi',
+			'status' => 'Belum Terekonsiliasi',
 			// 'tgl_pencairan' => tgl_db(input('tgl_cair')),
 			'createDate' => date('Y-m-d H:i:s')
 		);
@@ -345,7 +345,7 @@ class Channeling extends CI_Controller
 		);
 
 		if ($cek_kop['status'] == 'Update Outstanding') {
-			$data['status'] = 'Belum Terekonsialisasi';
+			$data['status'] = 'Belum Terekonsiliasi';
 		}
 
 		$this->db->update('tbl_koperasi', $data, ['id' => $id]);
@@ -637,7 +637,7 @@ class Channeling extends CI_Controller
 					$data['nm_perusahaan'] = $sheetData[$i][5];
 				}
 
-				$data['status'] = 'Belum Terekonsialisasi';
+				$data['status'] = 'Belum Terekonsiliasi';
 
 				$result[] = $data;
 			}
@@ -774,20 +774,23 @@ class Channeling extends CI_Controller
 					$msg .= 'format pada kolom ' . $sheetData[0][5] . ' baris ' . $i . ' tidak sesuai';
 					break;
 				} else {
-					if ($i > 1 && $sheetData[$i][5] != $sheetData[($i - 1)][5]) {
-						$status = false;
-						$msg .= 'value pada kolom ' . $sheetData[0][5] . ' baris ' . $i . ' tidak sesuai dengan sebelumnya';
-						break;
-					} else {
-						if (input('tgl_cair') == '' || input('tgl_cair') == $sheetData[$i][5]) {
-							$data['tgl_pencairan'] = $sheetData[$i][5];
-						} else {
-							$status = false;
-							$msg .= 'value pada kolom ' . $sheetData[0][5] . ' tidak sesuai dengan data anggota';
-							break;
-						}
-					}
+					$data['tgl_pencairan'] = $sheetData[$i][5];
 				}
+				// else {
+				// 	if ($i > 1 && $sheetData[$i][5] != $sheetData[($i - 1)][5]) {
+				// 		$status = false;
+				// 		$msg .= 'value pada kolom ' . $sheetData[0][5] . ' baris ' . $i . ' tidak sesuai dengan sebelumnya';
+				// 		break;
+				// 	} else {
+				// 		if (input('tgl_cair') == '' || input('tgl_cair') == $sheetData[$i][5]) {
+				// 			$data['tgl_pencairan'] = $sheetData[$i][5];
+				// 		} else {
+				// 			$status = false;
+				// 			$msg .= 'value pada kolom ' . $sheetData[0][5] . ' tidak sesuai dengan data anggota';
+				// 			break;
+				// 		}
+				// 	}
+				// }
 
 				if (!is_float($sheetData[$i][6])) {
 					$status = false;
@@ -830,7 +833,7 @@ class Channeling extends CI_Controller
 				$this->db->update(
 					'tbl_koperasi',
 					[
-						'tgl_pencairan' => $result[0]['tgl_pencairan'],
+						// 'tgl_pencairan' => $result[0]['tgl_pencairan'],
 						'tgl_ospokok' => $result[0]['tgl_ospokok']
 					],
 					['id' => input('id')]
@@ -920,7 +923,7 @@ class Channeling extends CI_Controller
 
 
 
-	// rekonsialisasi
+	// rekonsiliasi
 	public function temp_rekonsel()
 	{
 		$filename = 'template-rekon-channeling'; // set filename for csv file to be exported
@@ -1097,7 +1100,7 @@ class Channeling extends CI_Controller
 					$this->db->update(
 						'tbl_koperasi',
 						[
-							'status' => 'Proses Rekonsialisasi'
+							'status' => 'Proses Rekonsiliasi'
 						],
 						['id' => input('id_koperasi')]
 					);
@@ -1108,7 +1111,7 @@ class Channeling extends CI_Controller
 						$msg = 'Data gagal di upload';
 					} else {
 						$this->db->trans_commit();
-						$msg = 'Data Rekonsialisasi telah berhasil di upload!';
+						$msg = 'Data Rekonsiliasi telah berhasil di upload!';
 					}
 				}
 			}
