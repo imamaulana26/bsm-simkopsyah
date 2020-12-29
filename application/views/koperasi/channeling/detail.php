@@ -187,7 +187,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
 						<hr>
 						<label>3. Import file template</label>
-						<input type="hidden" class="form-control" name="rek_pembayaran" value="<?= $koperasi['rek_pembayaran'] ?>">
+						<!-- <input type="hidden" class="form-control" name="rek_pembayaran" value="<?= $koperasi['rek_pembayaran'] ?>"> -->
 						<input type="hidden" class="form-control" name="id" value="<?= $koperasi['id'] ?>">
 						<input type="hidden" class="form-control" name="batch" value="<?= $koperasi['tahap_pencairan'] ?>">
 						<input type="hidden" class="form-control" name="tgl_os" value="<?= $koperasi['tgl_ospokok'] ?>">
@@ -225,7 +225,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					<form id="fm_anggota" autocomplete="off">
 						<input type="hidden" class="form-control" id="id" name="id">
 						<input type="hidden" class="form-control" id="id_koperasi" name="id_koperasi" value="<?= $koperasi['id'] ?>">
-						<input type="hidden" class="form-control" id="rek_pembayaran" name="rek_pembayaran" value="<?= $koperasi['rek_pembayaran'] ?>">
+						<!-- <input type="hidden" class="form-control" id="rek_pembayaran" name="rek_pembayaran" value="<?= $koperasi['rek_pembayaran'] ?>"> -->
 						<input type="hidden" class="form-control" id="batch" name="batch" value="<?= $koperasi['tahap_pencairan'] ?>">
 						<div class="form-group row">
 							<label for="noloan" class="col-sm-3 col-form-label">Nomor Kontrak</label>
@@ -246,6 +246,21 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							<div class="col-sm-5">
 								<input type="text" class="form-control" id="nm_anggota" name="nm_anggota">
 								<div class="invalid-feedback" id="nm_anggota-feedback"></div>
+							</div>
+						</div>
+						<div class="form-group row">
+							<label for="tenor" class="col-sm-3 col-form-label">Jangka Waktu</label>
+							<div class="col-sm-1">
+								<input type="text" class="form-control" id="tenor" name="tenor" onkeypress="return CheckNumeric()" style="width: 55px;">
+								<div class="invalid-feedback" id="tenor-feedback"></div>
+							</div>
+							<label class="col-sm-2 col-form-label">Bulan</label>
+						</div>
+						<div class="form-group row">
+							<label for="rek_pembayaran" class="col-sm-3 col-form-label">Rekening Pembayaran</label>
+							<div class="col-sm-3">
+								<input type="text" class="form-control" id="rek_pembayaran" name="rek_pembayaran">
+								<div class="invalid-feedback" id="rek_pembayaran-feedback"></div>
 							</div>
 						</div>
 						<div class="form-group row">
@@ -275,14 +290,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
 									<div class="invalid-feedback" id="tgl_ospokok-feedback"></div>
 								</div>
 							</div>
-						</div>
-						<div class="form-group row">
-							<label for="tenor" class="col-sm-3 col-form-label">Jangka Waktu</label>
-							<div class="col-sm-1">
-								<input type="text" class="form-control" id="tenor" name="tenor" onkeypress="return CheckNumeric()" style="width: 55px;">
-								<div class="invalid-feedback" id="tenor-feedback"></div>
-							</div>
-							<label class="col-sm-2 col-form-label">Bulan</label>
 						</div>
 						<div class="form-group row">
 							<label for="nom_plafond" class="col-sm-3 col-form-label">Plafond Pencairan</label>
@@ -494,6 +501,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					$('#no_cif').val(res.nocif_anggota);
 					$('#nm_anggota').val(res.nm_anggota);
 					$('#tenor').val(res.tenor);
+					$('#rek_pembayaran').val(res.fk_rek_pembayaran);
 					$('#tgl_cair').val(tglIndo(res.tgl_pencairan));
 					$('#tgl_ospokok').val(tglIndo(res.tgl_ospokok));
 					$('#nom_plafond').val(new Intl.NumberFormat().format(res.nom_pencairan));

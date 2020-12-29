@@ -70,8 +70,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
 													<td><?= $val['nm_area']; ?></td>
 													<td class="text-right">
 														<?= number_format($val['nom_pencairan'], 2, '.', ',') ?>
-														<br>
-														<small><?= $val['tgl_pencairan'] == null ? '-' : tgl_indo($val['tgl_pencairan']) ?></small>
+														<!-- <br>
+														<small><?= $val['tgl_pencairan'] == null ? '-' : tgl_indo($val['tgl_pencairan']) ?></small> -->
 													</td>
 													<td class="text-right">
 														<?= number_format($val['os_pokok'], 2, '.', ',') ?>
@@ -92,7 +92,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 														$cek_os += (date('m', $timeEnd) - date('m', $timeStart));
 														// $cek_os = (date('m', $timeEnd) - date('m', $timeStart));
 
-														if ($cek_os >= 3 && $val['os_pokok'] != null && $val['status'] != 'Proses Rekonsiliasi') {
+														if ($cek_os >= 3 && $val['os_pokok'] != null && $val['status'] == 'Terekonsiliasi') {
 															$this->db->update('tbl_koperasi', ['status' => 'Update Outstanding'], ['id' => $val['id']]);
 														}
 														if ($val['status'] == 'Terekonsiliasi' && $numBulan >= 3) {
@@ -210,7 +210,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
 						<input type="hidden" class="form-control" name="kode_ao" value="<?= $_SESSION['kd_ao'] ?>">
 						<input type="hidden" class="form-control" name="id_koperasi" id="id_koperasi">
-						<input type="hidden" class="form-control" name="rek_pemb" id="rek_pemb">
+						<!-- <input type="hidden" class="form-control" name="rek_pemb" id="rek_pemb"> -->
 						<input type="hidden" class="form-control" name="batch" id="batch">
 						<div class="form-group row">
 							<label class="col-md-2 col-form-label">File Upload</label>
@@ -678,11 +678,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
 									</div>
 								</div>`;
 
-					html += `<div class="row">
+					if (res.anggota != null) {
+						html += `<div class="row">
 									<label class="col-md-2">Jumlah Anggota</label>
 									<div class="col-md-4">
 										` + res.anggota.anggota + ` Anggota</span>
 									</div>`;
+					}
+
 					if (res.koperasi.rekon > 0) {
 						html += `<label class="col-md-2">Rekap Rekonsiliasi</label>
 									<div class="col-md-4">

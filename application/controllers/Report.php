@@ -73,7 +73,11 @@ class Report extends CI_Controller
 		$pdf->Cell($pdf->GetPageWidth() / 2 - 45, 7, 'Rp ' . number_format($bank['ospokok'], 2, '.', ','), 0, 0);
 		$pdf->Cell(40, 7, 'O/S ' . substr(tgl_indo($koperasi['tgl_ospokok']), -8), 0, 0);
 		$pdf->Cell(5, 7, ':', 0, 0, 'C');
-		$pdf->Cell($pdf->GetPageWidth() / 2 - 45, 7, 'Rp ' . number_format($koperasi['ospokok'], 2, '.', ','), 0, 1);
+		$cond = '';
+		if ($bank['ospokok'] > $koperasi['ospokok']) {
+			$cond .= '(-' . (number_format($bank['ospokok'] - $koperasi['ospokok'], 2, '.', ',')) . ')';
+		}
+		$pdf->Cell($pdf->GetPageWidth() / 2 - 45, 7, 'Rp ' . number_format($koperasi['ospokok'], 2, '.', ',') . ' ' . $cond, 0, 1);
 
 		$pdf->Cell(40, 7, 'End User', 0, 0);
 		$pdf->Cell(5, 7, ':', 0, 0, 'C');
@@ -233,7 +237,7 @@ class Report extends CI_Controller
 		$pdf->Cell(70, 7, $_SESSION['nama'], 0, 1);
 		$pdf->SetFont('Times', 'i', 12);
 		$pdf->Cell(70, 7, $_SESSION['jabatan'], 0, 0);
-		$pdf->Cell(30, 7, $_SESSION['jabatan'], 0, 1);
+		// $pdf->Cell(30, 7, $_SESSION['jabatan'], 0, 1);
 		$pdf->Ln();
 
 		// $pdf->SetFont('Times', '', 12);

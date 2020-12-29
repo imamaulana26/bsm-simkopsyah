@@ -54,8 +54,8 @@ class Pdf extends FPDF
 		$len = strlen($t);
 
 		if ($wrap === true) {
-			if ($len > 14) {
-				$txt = str_split($t, 14);
+			if ($len > 16) {
+				$txt = str_split($t, 16);
 				$this->SetX($x);
 				$this->Cell($w, $first, $txt[0], '', '', '');
 				$this->SetX($x);
