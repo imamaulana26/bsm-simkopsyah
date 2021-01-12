@@ -20,19 +20,19 @@ class Report extends CI_Controller
 		$nm_kop = $this->db->get_where('tbl_koperasi', ['id' => $id])->row_array();
 
 		$qry_bank = "select id_koperasi as id, count(noloan_anggota) as anggota, sum(nom_pencairan) as plafond, tgl_ospokok, sum(os_pokok) as ospokok from tbl_anggota_channeling ";
-		$qry_bank .= "where tgl_rekon = '" . $tgl_rekon . "' and id_koperasi = '" . $id . "'";
+		$qry_bank .= "where tgl_ospokok = '" . $tgl_rekon . "' and id_koperasi = '" . $id . "'";
 		$bank = $this->db->query($qry_bank)->row_array();
 
 		$koperasi = $this->db->select('id_koperasi, count(noloan) as anggota, sum(plafond) as plafond, sum(ospokok) as ospokok, tgl_ospokok')->from('tbl_rekon_channeling')
-			->where(['id_koperasi' => $id, 'kode_ao' => $_SESSION['kd_ao'], 'rekon_date' => $tgl_rekon])
+			->where(['id_koperasi' => $id, 'kode_ao' => $_SESSION['kd_ao'], 'tgl_ospokok' => $tgl_rekon])
 			->get()->row_array();
 
 		$qry_li_bank = "select id_koperasi, noloan_anggota, nm_anggota, tenor, tgl_pencairan, nom_pencairan as plafond, tgl_ospokok, os_pokok as ospokok from tbl_anggota_channeling ";
-		$qry_li_bank .= "where tgl_rekon = '" . $tgl_rekon . "' and id_koperasi = '" . $id . "'";
+		$qry_li_bank .= "where tgl_ospokok = '" . $tgl_rekon . "' and id_koperasi = '" . $id . "'";
 		$li_bank = $this->db->query($qry_li_bank)->result_array();
 
 		$li_koperasi = $this->db->select('id_koperasi, noloan, nm_anggota, tenor, tgl_pencairan, plafond, tgl_ospokok, ospokok')->from('tbl_rekon_channeling')
-			->where(['id_koperasi' => $id, 'kode_ao' => $_SESSION['kd_ao'], 'rekon_date' => $tgl_rekon])
+			->where(['id_koperasi' => $id, 'kode_ao' => $_SESSION['kd_ao'], 'tgl_ospokok' => $tgl_rekon])
 			->get()->result_array();
 
 		$pdf = new PDF('L');
@@ -42,7 +42,9 @@ class Report extends CI_Controller
 
 		$pdf->SetFont('Times', '', 12);
 		$pdf->Cell(40, 7, 'Assalamu`alaikum Warahmatullahi Wabarakatuh', 0, 1);
-		$pdf->Cell(40, 7, 'Berikut ini Kami sampaikan hasil Rekonsiliasi Koperasi Channeling dengan hasil sebagai berikut :', 0, 1);
+		$arr_bln = array(1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember');
+		$pdf->Cell(40, 7, 'Telah diadakan rekonsiliasi pembayaran angsuran pembiayaan channeling koperasi ' . $nm_kop['nm_perusahaan'] . ' untuk periode bulan ' . $arr_bln[(int) substr($bank['tgl_ospokok'], 5, 2)] . ' ' . substr($bank['tgl_ospokok'], 0, 4), 0, 1);
+		$pdf->Cell(40, 7, 'Dengan data sebagai berikut :', 0, 1);
 		$pdf->Ln();
 
 		$pdf->Cell(40, 7, 'Nama Perusahaan', 0, 0, 'L');
@@ -74,8 +76,10 @@ class Report extends CI_Controller
 		$pdf->Cell(40, 7, 'O/S ' . substr(tgl_indo($koperasi['tgl_ospokok']), -8), 0, 0);
 		$pdf->Cell(5, 7, ':', 0, 0, 'C');
 		$cond = '';
-		if ($bank['ospokok'] > $koperasi['ospokok']) {
-			$cond .= '(-' . (number_format($bank['ospokok'] - $koperasi['ospokok'], 2, '.', ',')) . ')';
+		if ($koperasi['ospokok'] < $bank['ospokok']) {
+			if (abs($koperasi['ospokok'] - $bank['ospokok'])) {
+				$cond .= '(' . (number_format($koperasi['ospokok'] - $bank['ospokok'], 2, '.', ',')) . ')';
+			}
 		}
 		$pdf->Cell($pdf->GetPageWidth() / 2 - 45, 7, 'Rp ' . number_format($koperasi['ospokok'], 2, '.', ',') . ' ' . $cond, 0, 1);
 
@@ -186,7 +190,7 @@ class Report extends CI_Controller
 			$msg = 'telah sesuai.';
 		}
 
-		$text = 'Bahwa berdasarkan data diatas, sesuai perhitungan dan pencatatan antara PT BANK SYARIAH MANDIRI dengan ' . strtoupper($nm_kop['nm_koperasi']) . ' menerangkan bahwa data tersebut telah di rekonsiliasi dan ' . $msg;
+		$text = 'Bahwa berdasarkan data diatas, sesuai perhitungan dan pencatatan antara PT BANK SYARIAH MANDIRI dengan ' . strtoupper($nm_kop['nm_perusahaan']) . ' menerangkan bahwa data tersebut telah di rekonsiliasi dan ' . $msg;
 
 		$exp = explode(' ', $text);
 		$str_1 = '';
@@ -225,16 +229,22 @@ class Report extends CI_Controller
 		$pdf->Cell($pdf->GetPageWidth() - 20, 7, 'Demikian berita acara ini dibuat dengan sebenarnya dan untuk dipergunakan sebagaimana mestinya.', 0, 1);
 		$pdf->Ln();
 
-		$pdf->Cell(30, 7, '', 0, 0);
-		$arr_bln = array(1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember');
-		$pdf->Cell(30, 7, ', ' . date('d') . ' ' . $arr_bln[date('m')] . ' ' . date('Y'), 0, 1);
+		// $pdf->Cell(30, 7, '', 0, 0);
+		// $pdf->Cell(30, 7, ',' . date('d') . ' ' . $arr_bln[(int) date('m')] . ' ' . date('Y'), 1, 1);
+		$pdf->Cell(30, 7, '...................... , .... / .... / 20 ....', 0, 1);
 
 		$pdf->Cell(($pdf->GetPageWidth() - 20) / 2, 7, 'Membuat,', 0, 0);
 		$pdf->Cell(($pdf->GetPageWidth() - 20) / 2, 7, 'Mengetahui,', 0, 1);
 		$pdf->Cell(($pdf->GetPageWidth() - 20) / 2, 7, 'PT BANK SYARIAH MANDIRI', 0, 0);
-		$pdf->Cell(($pdf->GetPageWidth() - 20) / 2, 7, $nm_kop['nm_koperasi'], 0, 1);
+		$pdf->Cell(($pdf->GetPageWidth() - 20) / 2, 7, $nm_kop['nm_perusahaan'], 0, 1);
 		$pdf->Ln(25);
-		$pdf->Cell(70, 7, $_SESSION['nama'], 0, 1);
+		$pdf->Cell(50, 7, $_SESSION['nama'], 'B', 0);
+		$pdf->Cell(15, 7, '', '', 0);
+		$pdf->Cell(50, 7, '', 'B', 0);
+		$pdf->Cell(25, 7, '', '', 0);
+		$pdf->Cell(50, 7, '', 'B', 0);
+		$pdf->Cell(15, 7, '', '', 0);
+		$pdf->Cell(50, 7, '', 'B', 1);
 		$pdf->SetFont('Times', 'i', 12);
 		$pdf->Cell(70, 7, $_SESSION['jabatan'], 0, 0);
 		// $pdf->Cell(30, 7, $_SESSION['jabatan'], 0, 1);

@@ -452,10 +452,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
 				type: "POST",
 				dataType: "JSON",
 				data: $("#fm_anggota").serialize(),
-				beforeSend: function() {
-					$('.btn-secondary').prop('disabled', true);
-					$('.submit').prop('disabled', true).html('<i class="fa fa-fw fa-pulse fa-spinner"></i> Loading');
-				},
+				// beforeSend: function() {
+				// 	$('.submit').prop('disabled', true);
+				// 	$('.submit').prop('disabled', true).html('<i class="fa fa-fw fa-pulse fa-spinner"></i> Loading');
+				// },
 				success: function(res) {
 					if (res.status == true) {
 						$('#fm_modal').modal('hide');

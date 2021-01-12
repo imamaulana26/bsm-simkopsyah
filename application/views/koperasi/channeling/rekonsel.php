@@ -124,7 +124,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
 									<form action="<?= site_url('sales/koperasi/rekonsel/update') ?>" method="POST">
 										<input type="hidden" name="id" value="<?= $bank['id'] ?>">
 										<input type="hidden" name="tgl_os" value="<?= $bank['tgl_ospokok'] ?>">
-										<button class="btn btn-primary" type="submit">Oke</button>
+										<button class="btn btn-sm btn-primary" type="submit">Proses</button>
+										<?php if (strpos($msg, 'tidak sesuai') > 0) : ?>
+											<button class="btn btn-sm btn-danger" type="button" onclick="reject('<?= $bank['id'] ?>')">Batal</button>
+										<?php endif; ?>
 									</form>
 								</div>
 							</div>
@@ -297,4 +300,44 @@ scratch. This page gets rid of all links and provides the needed markup only.
 				$('#display').append('<li>Terdapat ' + <?= $tenor_plus ?> + ' nasabah dengan sisa tenor di koperasi lebih besar dari sisa tenor bank.</li>');
 			}
 		});
+	</script>
+
+	<script>
+		function reject(id) {
+			Swal.fire({
+				title: 'Batalkan proses rekonsiliasi?',
+				text: "Data yang dihapus tidak bisa dikembalikan lagi!",
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#3085d6',
+				cancelButtonColor: '#d33',
+				confirmButtonText: 'Hapus',
+				cancelButtonText: 'Tidak'
+			}).then((result) => {
+				if (result.value) {
+					$.ajax({
+						url: "<?= site_url('sales/koperasi/rekonsel/reject/') ?>" + id,
+						type: "POST",
+						dataType: "JSON",
+						success: function(res) {
+							Swal.fire({
+								icon: 'success',
+								title: 'Success',
+								text: 'Rekonsiliasi dibatalkan',
+								timer: 2000,
+								timerProgressBar: true,
+								// onBeforeOpen: () => {
+								// Swal.showLoading()
+								// },
+								showConfirmButton: false
+							}).then((result) => {
+								if (result.dismiss === Swal.DismissReason.timer) {
+									location.href = '<?= site_url('sales/koperasi-channeling') ?>';
+								}
+							})
+						}
+					});
+				}
+			})
+		}
 	</script>

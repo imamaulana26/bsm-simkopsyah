@@ -27,13 +27,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					<form action="<?= site_url('sales/koperasi/rekonsel/result') ?>" method="POST">
 						<input type="hidden" name="id_kop" id="id_kop" value="<?= $rekon[0]['id_koperasi'] ?>">
 						<div class="form-group row">
-							<label class="col-sm-2 col-form-label">Tgl Rekonsiliasi</label>
+							<label class="col-sm-2 col-form-label">Tgl Outstanding</label>
 							<div class="col-sm-4">
 								<select name="bln_rekon" id="bln_rekon" class="form-control">
 									<?php foreach ($rekon as $val) {
 										$select = '';
-										if ($_SESSION['tgl_rekon'] == $val['rekon_date']) $select = 'selected'; ?>
-										<option value="<?= $val['rekon_date'] ?>" <?= $select; ?>><?= tgl_indo($val['rekon_date']) ?></option>
+										if ($_SESSION['tgl_rekon'] == $val['tgl_ospokok']) $select = 'selected'; ?>
+										<option value="<?= $val['tgl_ospokok'] ?>" <?= $select; ?>><?= tgl_indo($val['tgl_ospokok']) ?></option>
 									<?php } ?>
 								</select>
 							</div>
@@ -101,9 +101,12 @@ scratch. This page gets rid of all links and provides the needed markup only.
 											<div class="col-md">
 												<?= 'Rp. ' . number_format($koperasi['ospokok'], 2, '.', ',') ?>
 												<?php if ($koperasi['ospokok'] < $bank['ospokok']) : ?>
-													<i class="fa fa-fw fa-caret-down text-red"></i>
-													<small class="text-red">(<?= number_format($koperasi['ospokok'] - $bank['ospokok'], 2, '.', ','); ?>)</small>
+													<?php if (abs($koperasi['ospokok'] - $bank['ospokok']) > 1000) : ?>
+														<i class="fa fa-fw fa-caret-down text-red"></i>
+														<small class="text-red">(<?= number_format($koperasi['ospokok'] - $bank['ospokok'], 2, '.', ','); ?>)</small>
+													<?php endif; ?>
 												<?php endif; ?>
+
 												<?php if ($koperasi['ospokok'] > $bank['ospokok']) : ?>
 													<i class="fa fa-fw fa-caret-up text-success"></i>
 													<small class="text-success">(<?= number_format($koperasi['ospokok'] - $bank['ospokok'], 2, '.', ','); ?>)</small>

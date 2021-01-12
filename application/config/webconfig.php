@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-$ver = "envi"; // envi or prod or maintenance
+$ver = "prod"; // envi or prod or maintenance
 
 switch ($ver) {
 	case "maintenance":
@@ -18,9 +18,9 @@ switch ($ver) {
 		$config = array(
 			'version' => 'prod',
 			'hostname' => 'localhost',
-			'username' => '',
+			'username' => 'u6020540_root',
 			'password' => '',
-			'database' => '',
+			'database' => 'u6020540_db_simkopsyah',
 			'dbdriver' => 'mysqli'
 		);
 		break;

@@ -23,6 +23,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
 							<span class="btn btn-sm btn-primary mr-2" id="btn_tambah" onclick="add_user()">
 								<i class="fa fa-fw fa-plus"></i> Tambah User
 							</span>
+							<button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#upd_modal">
+								<i class="fa fa-fw fa-cloud-upload-alt"></i> Upload
+							</button>
 							<span class="btn btn-sm btn-success float-right" id="btn_filter">
 								<i class="fa fa-fw fa-filter"></i>
 								<span id="txt_filter">Show Filter</span>
@@ -199,6 +202,50 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 					<span class="btn btn-outline-primary" onclick="fm_submit()"><i class="fa fa-fw fa-save"></i> Simpan</span>
 				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="upd_modal" data-backdrop="static" data-keyboard="false" tabindex="-1">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="upd_modalLabel">Upload daftar marketing</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<form id="fm_upload">
+					<div class="modal-body">
+						<label>1. Download file template</label>
+						<p>
+							Download template file marketing. File ini memiliki kolom header sesuai data yang diperlukan untuk import marketing.<br>
+							<a href="<?= site_url('admin/user/template/') ?>"><i class="fa fa-fw fa-file-alt"></i> Download File Template</a>
+						</p>
+						<hr>
+						<label>2. Input data template</label>
+						<p>Input data marketing ke dalam file template yang sudah di download. Pastikan bahwa data marketing sesuai dengan header kolom yang disediakan dalam template.</p>
+
+						<p class="text-danger">PENTING: Dilarang untuk merubah atau menghapus struktur header kolom yang disediakan dalam template upload. Hal ini dilakukan agar proses import bisa berjalan lancar. Tanggal diisi dengan format yyyy-mm-dd.</p>
+
+						<hr>
+						<label>3. Import file template</label>
+						<div class="form-group row">
+							<label class="col-md-2 col-form-label">File Upload</label>
+							<div class="col-md-6">
+								<div class="custom-file">
+									<input type="file" class="custom-file-input" id="upd_file" name="upd_file" accept=".csv" required>
+									<label class="custom-file-label" for="upd_file">Choose file</label>
+								</div>
+								<small class="text-muted">Format file yang dapat di import hanya CSV</small>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+						<button type="submit" class="btn btn-primary" id="btnSubmit">Upload</button>
+					</div>
+				</form>
 			</div>
 		</div>
 	</div>

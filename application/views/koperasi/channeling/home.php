@@ -50,8 +50,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
 												<th>Nomor CIF</th>
 												<th>Nama Koperasi</th>
 												<th>Nama Area</th>
-												<th>Nom Pencairan</th>
-												<th>Outstanding</th>
+												<th>Plafond Cair (Rp)</th>
+												<th>Outstanding <sub>(Rp)</sub></th>
 												<th class="text-center">Status</th>
 												<th class="text-center">Opsi</th>
 											</tr>
@@ -80,24 +80,24 @@ scratch. This page gets rid of all links and provides the needed markup only.
 													</td>
 													<td class="text-center">
 														<?php // func untuk rekonsel tiap 3 bulan
-														$timeStart = strtotime(date($val['tgl_rekon']));
-														$timeEnd = strtotime(date('Y-m-d'));
-														$numBulan = (date('Y', $timeEnd) - date('Y', $timeStart)) * 12;
-														$numBulan += (date('m', $timeEnd) - date('m', $timeStart));
+														// $timeStart = strtotime(date($val['tgl_rekon']));
+														// $timeEnd = strtotime(date('Y-m-d'));
+														// $numBulan = (date('Y', $timeEnd) - date('Y', $timeStart)) * 12;
+														// $numBulan += (date('m', $timeEnd) - date('m', $timeStart));
 														// $numBulan = (date('m', $timeEnd) - date('m', $timeStart));
 
-														$timeStart = strtotime(date($val['tgl_ospokok']));
-														$timeEnd = strtotime(date('Y-m-d'));
-														$cek_os = (date('Y', $timeEnd) - date('Y', $timeStart)) * 12;
-														$cek_os += (date('m', $timeEnd) - date('m', $timeStart));
+														// $timeStart = strtotime(date($val['tgl_ospokok']));
+														// $timeEnd = strtotime(date('Y-m-d'));
+														// $cek_os = (date('Y', $timeEnd) - date('Y', $timeStart)) * 12;
+														// $cek_os += (date('m', $timeEnd) - date('m', $timeStart));
 														// $cek_os = (date('m', $timeEnd) - date('m', $timeStart));
 
-														if ($cek_os >= 3 && $val['os_pokok'] != null && $val['status'] == 'Terekonsiliasi') {
-															$this->db->update('tbl_koperasi', ['status' => 'Update Outstanding'], ['id' => $val['id']]);
-														}
-														if ($val['status'] == 'Terekonsiliasi' && $numBulan >= 3) {
-															$this->db->update('tbl_koperasi', ['status' => 'Belum Terekonsiliasi'], ['id' => $val['id']]);
-														}
+														// if ($cek_os >= 4 && $val['os_pokok'] != null && $val['status'] != 'Proses Rekonsiliasi') {
+														// 	$this->db->update('tbl_koperasi', ['status' => 'Update Outstanding'], ['id' => $val['id']]);
+														// }
+														// if ($val['status'] == 'Terekonsiliasi' && $numBulan >= 3) {
+														// 	$this->db->update('tbl_koperasi', ['status' => 'Belum Terekonsiliasi'], ['id' => $val['id']]);
+														// }
 														?>
 
 														<?php if ($val['status'] == 'Update Outstanding') : ?>
@@ -529,7 +529,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 				dataType: 'json',
 				data: $('#fm_modal').serialize(),
 				// beforeSend: function() {
-				// 	$('.btn-secondary').prop('disabled', true);
+				// 	$('.submit').prop('disabled', true);
 				// 	$('.submit').prop('disabled', true).html('<i class="fa fa-fw fa-pulse fa-spinner"></i> Loading');
 				// },
 				success: function(res) {
@@ -624,6 +624,21 @@ scratch. This page gets rid of all links and provides the needed markup only.
 			})
 		}
 
+		function btn_rekon(id) {
+			$('#rekon_modal').modal('show');
+
+			$.ajax({
+				url: '<?= site_url('sales/koperasi/channeling/get_koperasi/') ?>' + id,
+				type: 'post',
+				dataType: 'json',
+				success: function(data) {
+					$('#id_koperasi').val(data.koperasi.id);
+					$('#batch').val(data.koperasi.tahap_pencairan);
+					$('#rek_pemb').val(data.koperasi.rek_pembayaran);
+				}
+			});
+		}
+
 		function detail(params) {
 			$.ajax({
 				url: '<?= site_url('sales/koperasi-channeling/') ?>' + params,
@@ -695,21 +710,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
 					html += `</div>`;
 
 					$('#detailModal .modal-body').html(html);
-				}
-			});
-		}
-
-		function btn_rekon(id) {
-			$('#rekon_modal').modal('show');
-
-			$.ajax({
-				url: '<?= site_url('sales/koperasi/channeling/get_koperasi/') ?>' + id,
-				type: 'post',
-				dataType: 'json',
-				success: function(data) {
-					$('#id_koperasi').val(data.koperasi.id);
-					$('#batch').val(data.koperasi.tahap_pencairan);
-					$('#rek_pemb').val(data.koperasi.rek_pembayaran);
 				}
 			});
 		}
