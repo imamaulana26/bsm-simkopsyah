@@ -8,9 +8,9 @@ switch ($ver) {
 		$config = array(
 			'version' => 'maintenance',
 			'hostname' => 'localhost',
-			'username' => '',
-			'password' => '',
-			'database' => '',
+			'username' => 'u6020540_root',
+			'password' => 'maulana26',
+			'database' => 'u6020540_db_simkopsyah',
 			'dbdriver' => 'mysqli'
 		);
 		break;
@@ -19,7 +19,7 @@ switch ($ver) {
 			'version' => 'prod',
 			'hostname' => 'localhost',
 			'username' => 'u6020540_root',
-			'password' => '',
+			'password' => 'maulana26',
 			'database' => 'u6020540_db_simkopsyah',
 			'dbdriver' => 'mysqli'
 		);
